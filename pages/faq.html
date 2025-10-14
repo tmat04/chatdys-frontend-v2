@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - ChatDys</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32x32.png">
+    <link rel="stylesheet" href="../css/shared-header.css">
+    <link rel="stylesheet" href="../css/feedback-modal.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 2rem;
+            color: #4ECDC4;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .faq-category {
+            margin-bottom: 2rem;
+        }
+
+        .category-title {
+            color: #4ECDC4;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #4ECDC4;
+        }
+
+        .faq-item {
+            margin-bottom: 1.5rem;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            background: #f8f9fa;
+            padding: 1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .faq-question:hover {
+            background: #e9ecef;
+        }
+
+        .faq-question.active {
+            background: #4ECDC4;
+            color: white;
+        }
+
+        .faq-toggle {
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+        }
+
+        .faq-question.active .faq-toggle {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .faq-answer.active {
+            padding: 1rem;
+            max-height: 500px;
+        }
+
+        .faq-answer p {
+            margin-bottom: 1rem;
+            color: #555;
+            line-height: 1.6;
+        }
+
+        .faq-answer ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .faq-answer li {
+            margin-bottom: 0.5rem;
+            color: #555;
+        }
+
+        .contact-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .contact-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .contact-text {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-button {
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .contact-button:hover {
+            background: #45b7aa;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .faq-section {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be inserted here by shared-header.js -->
+
+    <div class="container">
+        <h1 class="page-title">Frequently Asked Questions</h1>
+        <p class="page-subtitle">Find answers to common questions about ChatDys and dysautonomia support</p>
+
+        <div class="faq-section">
+            <div class="faq-category">
+                <h2 class="category-title">About ChatDys</h2>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>What is ChatDys?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>ChatDys is an AI-powered assistant specifically designed to help people with dysautonomia and Long Covid. We provide evidence-based medical information, symptom tracking, treatment guidance, and community support to help you manage your condition effectively.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>How accurate is the medical information provided?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Our AI is trained on peer-reviewed medical literature, clinical guidelines, and expert consensus documents. However, ChatDys is not a replacement for professional medical advice. Always consult with your healthcare provider for personalized medical decisions.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Is ChatDys free to use?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>ChatDys offers both free and premium plans. Free users get 5 questions per day, while premium subscribers enjoy unlimited questions, advanced features, and priority support.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-category">
+                <h2 class="category-title">Dysautonomia & POTS</h2>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>What is dysautonomia?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Dysautonomia is a disorder of the autonomic nervous system, which controls involuntary body functions like heart rate, blood pressure, digestion, and temperature regulation. It can cause a wide range of symptoms including dizziness, fatigue, heart palpitations, and digestive issues.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>What is POTS?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>POTS (Postural Orthostatic Tachycardia Syndrome) is a form of dysautonomia characterized by an abnormal increase in heart rate when standing up. Symptoms include dizziness, lightheadedness, fatigue, brain fog, and rapid heartbeat upon standing.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>How is dysautonomia diagnosed?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Diagnosis typically involves:</p>
+                        <ul>
+                            <li>Tilt table test</li>
+                            <li>Active standing test</li>
+                            <li>Heart rate variability testing</li>
+                            <li>Blood pressure monitoring</li>
+                            <li>Comprehensive medical history and symptom assessment</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-category">
+                <h2 class="category-title">Long Covid</h2>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>What is Long Covid?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Long Covid, also known as Post-Acute Sequelae of SARS-CoV-2 infection (PASC), refers to symptoms that persist for weeks or months after the initial COVID-19 infection. It can affect multiple organ systems and often includes dysautonomia-like symptoms.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>How does Long Covid relate to dysautonomia?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Many Long Covid patients develop dysautonomia symptoms, including POTS. The virus may damage the autonomic nervous system, leading to similar symptoms and management strategies as other forms of dysautonomia.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="faq-category">
+                <h2 class="category-title">Using ChatDys</h2>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>How do I ask a question?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Simply sign in to your account and type your question in the chat box on the homepage. Be as specific as possible about your symptoms, concerns, or what information you're looking for.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Can I track my symptoms?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! Use our Health Tracker feature to log your daily symptoms, medications, and activities. This helps identify patterns and provides valuable information for your healthcare provider.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <span>Is my health information private?</span>
+                        <span class="faq-toggle">▼</span>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Absolutely. We take privacy seriously and comply with healthcare data protection standards. Your personal health information is encrypted and never shared without your explicit consent.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="contact-section">
+            <h2 class="contact-title">Still have questions?</h2>
+            <p class="contact-text">Can't find what you're looking for? Our support team is here to help.</p>
+            <a href="support.html" class="contact-button">Contact Support</a>
+        </div>
+    </div>
+
+    <!-- Floating Feedback Button -->
+    <button class="feedback-button" onclick="openFeedbackModal()">
+        <span class="feedback-button-icon">💬</span>
+        <span class="feedback-button-text">Feedback</span>
+    </button>
+
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="../js/shared-header.js"></script>
+    <script src="../js/feedback-modal.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        function toggleFAQ(element) {
+            const answer = element.nextElementSibling;
+            const isActive = element.classList.contains('active');
+            
+            // Close all other FAQ items
+            document.querySelectorAll('.faq-question.active').forEach(item => {
+                if (item !== element) {
+                    item.classList.remove('active');
+                    item.nextElementSibling.classList.remove('active');
+                }
+            });
+            
+            // Toggle current item
+            if (isActive) {
+                element.classList.remove('active');
+                answer.classList.remove('active');
+            } else {
+                element.classList.add('active');
+                answer.classList.add('active');
+            }
+        }
+
+        // Initialize Auth0 when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.authManager) {
+                await authManager.init();
+            }
+        });
+    </script>
+</body>
+</html>

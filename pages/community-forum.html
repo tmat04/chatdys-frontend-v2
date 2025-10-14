@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Forum - ChatDys</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32x32.png">
+    <link rel="stylesheet" href="../css/shared-header.css">
+    <link rel="stylesheet" href="../css/feedback-modal.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .coming-soon-section {
+            background: white;
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .coming-soon-title {
+            font-size: 2rem;
+            color: #4ECDC4;
+            margin-bottom: 1rem;
+        }
+
+        .coming-soon-text {
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.7;
+        }
+
+        .best-of-worlds {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .best-of-worlds h3 {
+            color: #4ECDC4;
+            margin-bottom: 1rem;
+        }
+
+        .best-of-worlds p {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .best-of-worlds ul {
+            color: #666;
+            padding-left: 1.5rem;
+        }
+
+        .best-of-worlds li {
+            margin-bottom: 0.5rem;
+        }
+
+        .stay-tuned {
+            background: #e8f5e8;
+            border-left: 4px solid #4ECDC4;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            color: #2e7d32;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .forum-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .forum-title {
+            font-size: 2rem;
+            color: #2196F3;
+            margin-bottom: 1rem;
+        }
+
+        .forum-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            color: #856404;
+        }
+
+        .upgrade-link {
+            color: #2196F3;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .upgrade-link:hover {
+            text-decoration: underline;
+        }
+
+        .threads-section {
+            margin-top: 2rem;
+        }
+
+        .threads-title {
+            font-size: 1.5rem;
+            color: #2196F3;
+            margin-bottom: 1.5rem;
+        }
+
+        .thread-item {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1.5rem 0;
+            transition: background-color 0.2s ease;
+        }
+
+        .thread-item:hover {
+            background: #f8f9fa;
+            margin: 0 -1rem;
+            padding: 1.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        .thread-item:last-child {
+            border-bottom: none;
+        }
+
+        .thread-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .thread-title:hover {
+            color: #2196F3;
+        }
+
+        .thread-title.premium {
+            color: #8B5CF6;
+        }
+
+        .thread-meta {
+            font-size: 0.9rem;
+            color: #666;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .thread-author {
+            font-weight: 500;
+        }
+
+        .thread-replies {
+            color: #4CAF50;
+        }
+
+        .thread-time {
+            color: #999;
+        }
+
+        .premium-notice {
+            background: #f3e5f5;
+            border: 1px solid #e1bee7;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #7b1fa2;
+        }
+
+        .premium-notice a {
+            color: #8B5CF6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .premium-notice a:hover {
+            text-decoration: underline;
+        }
+
+        .more-discussions {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #f0f0f0;
+            color: #666;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .coming-soon-title {
+                font-size: 1.5rem;
+            }
+            
+            .forum-title {
+                font-size: 1.5rem;
+            }
+            
+            .thread-meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be inserted here by shared-header.js -->
+
+    <div class="container">
+        <div class="coming-soon-section">
+            <h1 class="coming-soon-title">Community Forum Coming Soon!</h1>
+            <p class="coming-soon-text">
+                We're building a supportive community space where you can connect with others who understand your journey with dysautonomia and Long Covid.
+            </p>
+            
+            <div class="best-of-worlds">
+                <h3>The Best of Both Worlds</h3>
+                <p>While we're developing our community forum, you can still get support through:</p>
+                <ul>
+                    <li><strong>AI Chat:</strong> Get instant, evidence-based answers to your questions on the homepage</li>
+                    <li><strong>Health Tracking:</strong> Monitor your symptoms and progress with our health tracker</li>
+                    <li><strong>Expert Information:</strong> Access research-backed information about dysautonomia and Long Covid</li>
+                </ul>
+            </div>
+            
+            <div class="stay-tuned">
+                Stay tuned for the launch of our community forum where you'll be able to connect with others on similar journeys!
+            </div>
+        </div>
+
+        <div class="forum-section">
+            <h2 class="forum-title">Preview: Community Discussions</h2>
+            
+            <div class="forum-notice">
+                <strong>Coming Soon!</strong> These discussion threads will be available when our community forum launches. 
+                <a href="../pages/premium-signup.html" class="upgrade-link">Upgrade to Premium</a> for early access and exclusive features.
+            </div>
+
+            <div class="threads-section">
+                <h3 class="threads-title">Popular Discussions</h3>
+                
+                <div class="thread-item">
+                    <a href="#" class="thread-title">Managing POTS symptoms during summer heat</a>
+                    <div class="thread-meta">
+                        <span class="thread-author">Sarah M.</span>
+                        <span class="thread-replies">23 replies</span>
+                        <span class="thread-time">2 hours ago</span>
+                    </div>
+                </div>
+
+                <div class="thread-item">
+                    <a href="#" class="thread-title">Long Covid brain fog - what's helping you?</a>
+                    <div class="thread-meta">
+                        <span class="thread-author">Mike R.</span>
+                        <span class="thread-replies">45 replies</span>
+                        <span class="thread-time">4 hours ago</span>
+                    </div>
+                </div>
+
+                <div class="thread-item">
+                    <a href="#" class="thread-title premium">Premium: Medication experiences and side effects</a>
+                    <div class="thread-meta">
+                        <span class="thread-author">Dr. Jennifer K.</span>
+                        <span class="thread-replies">67 replies</span>
+                        <span class="thread-time">6 hours ago</span>
+                    </div>
+                    <div class="premium-notice">
+                        This is a premium discussion thread. <a href="../pages/premium-signup.html">Upgrade to Premium</a> to participate in expert-moderated discussions.
+                    </div>
+                </div>
+
+                <div class="thread-item">
+                    <a href="#" class="thread-title">Exercise modifications for dysautonomia</a>
+                    <div class="thread-meta">
+                        <span class="thread-author">Alex T.</span>
+                        <span class="thread-replies">31 replies</span>
+                        <span class="thread-time">8 hours ago</span>
+                    </div>
+                </div>
+
+                <div class="thread-item">
+                    <a href="#" class="thread-title">Workplace accommodations - sharing experiences</a>
+                    <div class="thread-meta">
+                        <span class="thread-author">Lisa P.</span>
+                        <span class="thread-replies">19 replies</span>
+                        <span class="thread-time">12 hours ago</span>
+                    </div>
+                </div>
+
+                <div class="more-discussions">
+                    And many more discussions coming soon...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Feedback Button -->
+    <button class="feedback-button" onclick="openFeedbackModal()">
+        <span class="feedback-button-icon">💬</span>
+        <span class="feedback-button-text">Feedback</span>
+    </button>
+
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="../js/shared-header.js"></script>
+    <script src="../js/feedback-modal.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        // Initialize Auth0 when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.authManager) {
+                await authManager.init();
+            }
+        });
+    </script>
+</body>
+</html>

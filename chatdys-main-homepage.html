@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatDys - Your AI Assistant for Dysautonomia and Long Covid</title>
+    <link rel="stylesheet" href="css/feedback-modal.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: white;
+            padding: 0.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-img {
+            height: 120px;
+            width: auto;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .beta-badge {
+            background: #2196F3;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .auth-section {
+            display: flex;
+            align-items: center;
+        }
+
+        .sign-in-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .sign-in-btn:hover {
+            background: #1976D2;
+        }
+
+        .user-menu {
+            position: relative;
+            display: none;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .user-info:hover {
+            background: #f5f5f5;
+        }
+
+        .user-avatar-img {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .dropdown-arrow {
+            font-size: 10px;
+            color: #666;
+            transition: transform 0.2s;
+        }
+
+        .user-menu.active .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            min-width: 250px;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            border: 1px solid #e1e5e9;
+        }
+
+        .user-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .dropdown-header {
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .user-avatar-large-img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name-large {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .user-email {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .premium-badge {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e1e5e9;
+            margin: 0.5rem 0;
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.75rem 1rem;
+            color: #333;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+        .dropdown-icon {
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            background: white;
+            border: 1px solid #ddd;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-button:hover {
+            background: #f8f9fa;
+            border-color: #4ECDC4;
+        }
+
+        .nav-button.premium {
+            background: linear-gradient(135deg, #9C27B0, #673AB7);
+            color: white;
+            border: none;
+        }
+
+        .nav-button.premium:hover {
+            background: linear-gradient(135deg, #8E24AA, #5E35B1);
+        }
+
+        .notification-badge {
+            background: #ff4444;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+
+        .chat-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .chat-textarea {
+            width: 100%;
+            min-height: 120px;
+            border: 2px solid #4ECDC4;
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .chat-textarea:focus {
+            border-color: #45b7aa;
+        }
+
+        .chat-textarea:disabled {
+            background: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .chat-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        .char-counter {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .ask-button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ask-button:hover:not(:disabled) {
+            background: #1976D2;
+        }
+
+        .ask-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .response-area {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #4ECDC4;
+            display: none;
+        }
+
+        .response-area.show {
+            display: block;
+        }
+
+        .response-content {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .help-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .help-title {
+            text-align: center;
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 2rem;
+        }
+
+        .help-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .help-column h3 {
+            color: #4ECDC4;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .help-column ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .help-column li {
+            padding: 0.5rem 0;
+            color: #666;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .help-column li:last-child {
+            border-bottom: none;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        .footer a {
+            color: #4ECDC4;
+            text-decoration: none;
+            margin: 0 1rem;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Usage info for free users */
+        .usage-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .usage-info.show {
+            display: block;
+        }
+
+        .premium-upgrade {
+            background: linear-gradient(135deg, #9C27B0, #673AB7);
+            color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+        }
+
+        .premium-upgrade.show {
+            display: block;
+        }
+
+        .premium-upgrade button {
+            background: white;
+            color: #9C27B0;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .nav-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .help-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .user-dropdown {
+                min-width: 200px;
+                right: -10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <img src="assets/ChatDysWideLogoTransparent.png" alt="ChatDys" class="logo-img">
+            <span class="beta-badge">Beta</span>
+        </div>
+        <div class="auth-section">
+            <!-- Auth Button (Auth0 integration) -->
+            <button class="sign-in-btn" id="authButton" onclick="authManager.login()">Sign In</button>
+            
+            <!-- User Menu (shown when logged in) -->
+            <div class="user-menu" id="userMenu" style="display: none;">
+                <div class="user-info" onclick="toggleUserDropdown()">
+                    <img id="userAvatar" src="https://via.placeholder.com/32" alt="User" class="user-avatar-img">
+                    <span id="userName">User</span>
+                    <span class="dropdown-arrow">▼</span>
+                </div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-header">
+                        <img id="userAvatarLarge" src="https://via.placeholder.com/40" alt="User" class="user-avatar-large-img">
+                        <div class="user-details">
+                            <div class="user-name-large" id="userNameLarge">User</div>
+                            <div class="user-email" id="userEmail">user@example.com</div>
+                            <span class="premium-badge" id="premiumBadge" style="display: none;">Premium</span>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="pages/profile.html" class="dropdown-item">
+                        <span class="dropdown-icon">👤</span>
+                        Profile
+                    </a>
+                    <a href="pages/settings.html" class="dropdown-item">
+                        <span class="dropdown-icon">⚙️</span>
+                        Settings
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="pages/health-tracker.html" class="dropdown-item">
+                        <span class="dropdown-icon">📊</span>
+                        Health Tracker
+                    </a>
+                    <a href="pages/community-forum.html" class="dropdown-item">
+                        <span class="dropdown-icon">👥</span>
+                        Community Forum
+                    </a>
+                    <button class="dropdown-item" id="historyButton" onclick="goToHistory()" style="display: none;">
+                        <span class="dropdown-icon">📜</span>
+                        Chat History
+                    </button>
+                    <a href="pages/premium-signup.html" class="dropdown-item">
+                        <span class="dropdown-icon">⭐</span>
+                        Upgrade to Premium
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <button class="dropdown-item" onclick="openFeedbackModal()">
+                        <span class="dropdown-icon">💬</span>
+                        Send Feedback
+                    </button>
+                    <a href="pages/support.html" class="dropdown-item">
+                        <span class="dropdown-icon">💝</span>
+                        Support
+                    </a>
+                    <button class="dropdown-item" onclick="logout()">
+                        <span class="dropdown-icon">🚪</span>
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="welcome-section">
+            <h1 class="welcome-title">Welcome to ChatDys</h1>
+            <p class="welcome-subtitle">Your AI assistant for dysautonomia and Long Covid questions</p>
+            
+            <div class="nav-buttons">
+                <a href="pages/health-tracker.html" class="nav-button">
+                    📊 Health Tracker
+                </a>
+                <a href="pages/community-forum.html" class="nav-button">
+                    👥 Community Forum
+                </a>
+                <a href="pages/faq.html" class="nav-button">
+                    ❓ FAQ
+                </a>
+                <a href="pages/support.html" class="nav-button">
+                    💝 Support
+                </a>
+                <a href="pages/premium-signup.html" class="nav-button premium">
+                    ⭐ Upgrade to Premium
+                </a>
+            </div>
+        </div>
+
+        <div class="chat-section">
+            <!-- Usage info for free users -->
+            <div class="usage-info" id="usageInfo">
+                <strong>Free Plan:</strong> <span id="questionCount">0</span>/<span id="maxQuestions">5</span> questions used today.
+                <a href="pages/premium-signup.html">Upgrade to Premium</a> for unlimited questions.
+            </div>
+
+            <!-- Premium upgrade prompt -->
+            <div class="premium-upgrade" id="premiumUpgrade">
+                <strong>Daily limit reached!</strong> Upgrade to Premium for unlimited questions and advanced features.
+                <br>
+                <button onclick="window.location.href='pages/premium-signup.html'">Upgrade Now</button>
+            </div>
+
+            <textarea 
+                id="chatInput" 
+                class="chat-textarea" 
+                placeholder="Please sign in to start chatting..."
+                disabled
+            ></textarea>
+            
+            <div class="chat-controls">
+                <div class="char-counter">
+                    <span id="charCount">0</span>/2000 characters
+                </div>
+                <button id="sendButton" class="ask-button" onclick="askQuestion()" disabled>
+                    <div class="loading-spinner" id="loadingSpinner"></div>
+                    <span id="buttonText">Ask Question</span>
+                </button>
+            </div>
+
+            <div class="response-area" id="responseArea">
+                <div class="response-content" id="responseContent"></div>
+            </div>
+        </div>
+
+        <div class="help-section">
+            <h2 class="help-title">Ready to help with your dysautonomia questions</h2>
+            <div class="help-grid">
+                <div class="help-column">
+                    <h3>Example Questions</h3>
+                    <ul>
+                        <li>What are the main symptoms of POTS?</li>
+                        <li>How can I manage orthostatic intolerance?</li>
+                        <li>What dietary changes help with dysautonomia?</li>
+                        <li>How does Long Covid affect the autonomic nervous system?</li>
+                        <li>What exercises are safe for POTS patients?</li>
+                    </ul>
+                </div>
+                <div class="help-column">
+                    <h3>ChatDys Capabilities</h3>
+                    <ul>
+                        <li>Evidence-based medical information</li>
+                        <li>Symptom tracking and analysis</li>
+                        <li>Treatment option explanations</li>
+                        <li>Lifestyle management tips</li>
+                        <li>Research paper summaries</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <a href="pages/privacy-policy.html">Privacy Policy</a>
+        <a href="pages/terms-of-service.html">Terms of Service</a>
+    </div>
+
+    <!-- Floating Feedback Button -->
+    <button class="feedback-button" onclick="openFeedbackModal()">
+        <span class="feedback-button-icon">💬</span>
+        <span class="feedback-button-text">Feedback</span>
+    </button>
+
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="config/config.js"></script>
+    <script src="js/feedback-modal.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Configuration
+        const API_BASE_URL = Config.BACKEND_BASE_URL;
+
+        // Initialize Auth0 when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            await authManager.init();
+            updateCharCounter();
+        });
+
+        // Dropdown toggle function
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const userMenu = document.querySelector('.user-menu');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (userMenu && dropdown && !userMenu.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Character counter
+        function updateCharCounter() {
+            const textarea = document.getElementById('chatInput');
+            const charCount = document.getElementById('charCount');
+            
+            if (textarea && charCount) {
+                textarea.addEventListener('input', () => {
+                    charCount.textContent = textarea.value.length;
+                });
+            }
+        }
+
+        // Enter key handling
+        document.getElementById('chatInput')?.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                askQuestion();
+            }
+        });
+
+        // Ask question function
+        async function askQuestion() {
+            const textarea = document.getElementById('chatInput');
+            const sendButton = document.getElementById('sendButton');
+            const buttonText = document.getElementById('buttonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const responseArea = document.getElementById('responseArea');
+            const responseContent = document.getElementById('responseContent');
+
+            if (!authManager.isAuthenticated()) {
+                alert('Please sign in to ask questions.');
+                return;
+            }
+
+            const question = textarea.value.trim();
+            if (!question) {
+                alert('Please enter a question.');
+                return;
+            }
+
+            // Show loading state
+            sendButton.disabled = true;
+            buttonText.textContent = 'ChatDys is thinking...';
+            loadingSpinner.style.display = 'block';
+            responseArea.classList.add('show');
+            responseContent.innerHTML = '<div style="text-align: center; color: #666;">ChatDys is analyzing your question...</div>';
+
+            try {
+                const token = await authManager.getToken();
+                const response = await fetch(`${API_BASE_URL}/api/query`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        question: question
+                    })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Display response
+                    let responseHtml = `<div><strong>ChatDys:</strong></div><div style="margin-top: 0.5rem;">${data.answer || data.response || 'I apologize, but I encountered an issue processing your question. Please try again.'}</div>`;
+                    
+                    if (data.sources && data.sources.length > 0) {
+                        responseHtml += '<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;"><strong>Sources:</strong><ul style="margin-top: 0.5rem;">';
+                        data.sources.forEach(source => {
+                            responseHtml += `<li style="margin-bottom: 0.25rem;"><a href="${source.url}" target="_blank" style="color: #4ECDC4;">${source.title}</a></li>`;
+                        });
+                        responseHtml += '</ul></div>';
+                    }
+                    
+                    responseContent.innerHTML = responseHtml;
+                    
+                    // Clear textarea
+                    textarea.value = '';
+                    updateCharCounter();
+                } else {
+                    const errorData = await response.json();
+                    responseContent.innerHTML = `<div style="color: #dc3545;"><strong>Error:</strong> ${errorData.detail || 'Failed to get response from ChatDys.'}</div>`;
+                }
+            } catch (error) {
+                console.error('Error asking question:', error);
+                responseContent.innerHTML = '<div style="color: #dc3545;"><strong>Error:</strong> Unable to connect to ChatDys. Please check your internet connection and try again.</div>';
+            } finally {
+                // Reset button state
+                sendButton.disabled = false;
+                buttonText.textContent = 'Ask Question';
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Logout function
+        function logout() {
+            if (authManager) {
+                authManager.logout();
+            }
+        }
+
+        // Go to history function
+        function goToHistory() {
+            window.location.href = 'pages/history.html';
+        }
+    </script>
+</body>
+</html>

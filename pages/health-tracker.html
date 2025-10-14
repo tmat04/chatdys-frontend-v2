@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Tracker - ChatDys</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32x32.png">
+    <link rel="stylesheet" href="../css/shared-header.css">
+    <link rel="stylesheet" href="../css/feedback-modal.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 2rem;
+            color: #9C27B0;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .coming-soon-message {
+            text-align: center;
+            color: #9C27B0;
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            font-weight: 500;
+        }
+
+        /* Upcoming Appointments Section */
+        .appointments-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .appointments-title {
+            color: #9C27B0;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .appointment-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #f8f4ff;
+            border-radius: 10px;
+            border-left: 4px solid #9C27B0;
+        }
+
+        .appointment-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .appointment-icon {
+            width: 40px;
+            height: 40px;
+            background: #9C27B0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .appointment-details h4 {
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .appointment-details p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .details-button {
+            background: transparent;
+            color: #9C27B0;
+            border: 1px solid #9C27B0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .details-button:hover {
+            background: #9C27B0;
+            color: white;
+        }
+
+        /* Q&A Section */
+        .qa-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .qa-title {
+            color: #4285F4;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .qa-description {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+
+        .qa-highlight {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #856404;
+        }
+
+        .return-chat-button {
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .return-chat-button:hover {
+            background: #3367d6;
+        }
+
+        /* Dashboard Preview Section */
+        .dashboard-preview {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .dashboard-preview-title {
+            color: #9C27B0;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .dashboard-preview-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .feature-title {
+            color: #9C27B0;
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            color: #555;
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .feature-list li:before {
+            content: "•";
+            color: #9C27B0;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        /* Mock Dashboard Preview */
+        .mock-dashboard {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .mock-dashboard-title {
+            color: #9C27B0;
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .mock-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .mock-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 2px dashed #ddd;
+            text-align: center;
+        }
+
+        .mock-card h4 {
+            color: #9C27B0;
+            margin-bottom: 1rem;
+        }
+
+        .mock-chart {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1976d2;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .mock-data {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .final-message {
+            text-align: center;
+            color: #9C27B0;
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 1.5rem;
+            }
+            
+            .appointment-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .mock-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be inserted here by shared-header.js -->
+
+    <div class="container">
+        <h1 class="page-title">Health Dashboard Preview (Coming Soon)</h1>
+        <p class="coming-soon-message">Stay tuned for the launch of your personal health dashboard!</p>
+
+        <!-- Upcoming Appointments -->
+        <div class="appointments-section">
+            <h2 class="appointments-title">Upcoming Appointments</h2>
+            
+            <div class="appointment-item">
+                <div class="appointment-info">
+                    <div class="appointment-icon">📅</div>
+                    <div class="appointment-details">
+                        <h4>Dr. Smith - Cardiologist</h4>
+                        <p>June 15 at 10:00 AM</p>
+                    </div>
+                </div>
+                <button class="details-button">Details</button>
+            </div>
+
+            <div class="appointment-item">
+                <div class="appointment-info">
+                    <div class="appointment-icon">📅</div>
+                    <div class="appointment-details">
+                        <h4>Dr. Johnson - Neurologist</h4>
+                        <p>July 3 at 2:30 PM</p>
+                    </div>
+                </div>
+                <button class="details-button">Details</button>
+            </div>
+        </div>
+
+        <!-- Q&A Section -->
+        <div class="qa-section">
+            <h2 class="qa-title">Q&A Section</h2>
+            <p class="qa-description">
+                Currently, you can ask questions about dysautonomia and long-COVID in our chat interface on the home page. Our AI will provide research-based answers to help you understand your condition better.
+            </p>
+            <div class="qa-highlight">
+                This section will be transformed into your personal health dashboard in an upcoming update.
+            </div>
+            <a href="../chatdys-main-homepage.html" class="return-chat-button">Return to Chat</a>
+        </div>
+
+        <!-- Dashboard Preview -->
+        <div class="dashboard-preview">
+            <h2 class="dashboard-preview-title">Personal Health Dashboard Coming Soon!</h2>
+            <p class="dashboard-preview-subtitle">
+                We're developing a comprehensive personal health tracking system to help you manage your dysautonomia and long-COVID journey.
+            </p>
+        </div>
+
+        <!-- Features -->
+        <div class="features-grid">
+            <div class="feature-section">
+                <h3 class="feature-title">Upload and Track Your Medical Information</h3>
+                <ul class="feature-list">
+                    <li>Upload and store your doctor's notes and visit summaries</li>
+                    <li>Track diagnoses and changes in your condition over time</li>
+                    <li>Manage current and previous treatment plans</li>
+                    <li>Keep a record of current and previous prescriptions</li>
+                    <li>Document your symptoms and triggers</li>
+                </ul>
+            </div>
+
+            <div class="feature-section">
+                <h3 class="feature-title">Get Personalized Insights</h3>
+                <ul class="feature-list">
+                    <li>Receive potential treatment recommendations based on research</li>
+                    <li>See what has helped others with similar symptoms</li>
+                    <li>Track your progress and healing journey</li>
+                    <li>Identify patterns and correlations in your symptoms</li>
+                    <li>Always under doctor's supervision - we provide information to discuss with your healthcare provider</li>
+                </ul>
+            </div>
+
+            <div class="feature-section">
+                <h3 class="feature-title">Smart Device Integration</h3>
+                <ul class="feature-list">
+                    <li>Connect with wearable devices to track heart rate, blood pressure, and other vital signs</li>
+                    <li>Monitor sleep patterns and quality</li>
+                    <li>Track physical activity and exercise tolerance</li>
+                    <li>Generate reports to share with your healthcare providers</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Mock Dashboard Preview -->
+        <div class="mock-dashboard">
+            <h3 class="mock-dashboard-title">Dashboard Preview</h3>
+            <div class="mock-grid">
+                <div class="mock-card">
+                    <h4>Health Overview</h4>
+                    <div class="mock-chart">Symptom Tracker Chart</div>
+                    <div class="mock-data">Weekly symptom trends</div>
+                </div>
+
+                <div class="mock-card">
+                    <h4>Medical Information Upload</h4>
+                    <div class="mock-chart">📄 Upload Documents</div>
+                    <div class="mock-data">Recent uploads: Doctor's Note, Test Results</div>
+                </div>
+
+                <div class="mock-card">
+                    <h4>Personalized Insights</h4>
+                    <div class="mock-chart">💡 Recommendations</div>
+                    <div class="mock-data">Treatment effectiveness tracking</div>
+                </div>
+
+                <div class="mock-card">
+                    <h4>Smart Device Integration</h4>
+                    <div class="mock-chart">⌚ Connected Devices</div>
+                    <div class="mock-data">Heart rate, sleep quality monitoring</div>
+                </div>
+            </div>
+        </div>
+
+        <p class="final-message">Stay tuned for the launch of your personal health dashboard!</p>
+    </div>
+
+    <!-- Floating Feedback Button -->
+    <button class="feedback-button" onclick="openFeedbackModal()">
+        <span class="feedback-button-icon">💬</span>
+        <span class="feedback-button-text">Feedback</span>
+    </button>
+
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="../js/shared-header.js"></script>
+    <script src="../js/feedback-modal.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        // Initialize Auth0 when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.authManager) {
+                await authManager.init();
+            }
+        });
+    </script>
+</body>
+</html>

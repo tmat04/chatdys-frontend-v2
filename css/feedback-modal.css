@@ -1,0 +1,424 @@
+/* Complete Feedback Modal Styles - Based on working React components */
+
+/* Fixed Floating Feedback Button - Turquoise like ChatDys.com */
+.feedback-button {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    background: #4ECDC4 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 25px !important;
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3) !important;
+    z-index: 9999 !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    text-decoration: none !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    min-width: auto !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+}
+
+.feedback-button:hover {
+    background: #45b7aa !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(78, 205, 196, 0.4) !important;
+}
+
+.feedback-button:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3) !important;
+}
+
+.feedback-button-icon {
+    font-size: 18px !important;
+    line-height: 1 !important;
+}
+
+.feedback-button-text {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .feedback-button {
+        bottom: 15px !important;
+        right: 15px !important;
+        padding: 12px 16px !important;
+        font-size: 13px !important;
+        min-width: 100px !important;
+    }
+    
+    .feedback-button-text {
+        font-size: 13px !important;
+    }
+    
+    .feedback-button-icon {
+        font-size: 16px !important;
+    }
+}
+
+/* Extra small screens - icon only */
+@media (max-width: 480px) {
+    .feedback-button {
+        border-radius: 50% !important;
+        width: 56px !important;
+        height: 56px !important;
+        padding: 0 !important;
+        min-width: unset !important;
+    }
+    
+    .feedback-button-text {
+        display: none !important;
+    }
+    
+    .feedback-button-icon {
+        font-size: 20px !important;
+    }
+}
+
+/* Feedback Modal Styles */
+.feedback-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    animation: fadeIn 0.3s ease;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+}
+
+.feedback-modal.show {
+    display: flex !important;
+}
+
+.feedback-modal-content {
+    background-color: white;
+    border-radius: 16px;
+    padding: 0;
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.feedback-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #f0f0f0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border-radius: 16px 16px 0 0;
+}
+
+.feedback-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.feedback-modal-title::before {
+    content: "💬";
+    font-size: 1.2em;
+}
+
+.feedback-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.feedback-close:hover {
+    background-color: #f5f5f5;
+    color: #333;
+    transform: scale(1.1);
+}
+
+.feedback-modal-body {
+    padding: 2rem;
+}
+
+.feedback-subtitle {
+    color: #666;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.feedback-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.feedback-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.feedback-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.feedback-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.feedback-select:focus {
+    outline: none;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+}
+
+.feedback-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.75rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.feedback-textarea:focus {
+    outline: none;
+    border-color: #4ECDC4;
+    box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.1);
+}
+
+.feedback-textarea::placeholder {
+    color: #999;
+}
+
+/* Error styling */
+.feedback-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+}
+
+.feedback-error-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.feedback-error-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.feedback-error-text {
+    color: #dc2626;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.feedback-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    border-top: 1px solid #f0f0f0;
+    background-color: #f8f9fa;
+    border-radius: 0 0 16px 16px;
+}
+
+.feedback-btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 600;
+    min-width: 100px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.feedback-btn-cancel {
+    background-color: #f5f5f5;
+    color: #666;
+    border: 2px solid #e1e5e9;
+}
+
+.feedback-btn-cancel:hover {
+    background-color: #e9e9e9;
+    border-color: #d1d5d9;
+}
+
+.feedback-btn-submit {
+    background: #4ECDC4;
+    color: white;
+    border: 2px solid transparent;
+}
+
+.feedback-btn-submit:hover:not(:disabled) {
+    background: #45b7aa;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(78, 205, 196, 0.3);
+}
+
+.feedback-btn-submit:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Spinner for submit button */
+.feedback-btn-spinner {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Success message */
+.feedback-success {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+    color: #4CAF50;
+}
+
+.feedback-success.show {
+    display: block;
+}
+
+.feedback-success-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.feedback-success-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #333;
+}
+
+.feedback-success-message {
+    color: #666;
+    font-size: 0.95rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .feedback-modal-content {
+        width: 95%;
+        margin: 1rem;
+        max-height: 90vh;
+    }
+    
+    .feedback-modal-header,
+    .feedback-modal-body,
+    .feedback-modal-footer {
+        padding: 1rem;
+    }
+    
+    .feedback-modal-footer {
+        flex-direction: column;
+    }
+    
+    .feedback-btn {
+        width: 100%;
+    }
+}
+
+/* Ensure button is always visible and on top */
+.feedback-button {
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Override any conflicting styles */
+body .feedback-button {
+    position: fixed !important;
+    z-index: 9999 !important;
+}

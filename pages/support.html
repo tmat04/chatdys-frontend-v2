@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support ChatDys - ChatDys</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="../assets/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../assets/favicon-32x32.png">
+    <link rel="stylesheet" href="../css/shared-header.css">
+    <link rel="stylesheet" href="../css/feedback-modal.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 3rem;
+        }
+
+        .support-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .support-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s;
+        }
+
+        .support-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .support-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .support-card h3 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .support-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .support-button {
+            background: #4ECDC4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .support-button:hover {
+            background: #45b7aa;
+            transform: translateY(-2px);
+        }
+
+        .support-button.secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e1e5e9;
+        }
+
+        .support-button.secondary:hover {
+            background: #e9ecef;
+            border-color: #d1d5d9;
+        }
+
+        .donation-section {
+            background: linear-gradient(135deg, #9C27B0, #673AB7);
+            color: white;
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .donation-title {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .donation-text {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .donation-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .donation-button {
+            background: white;
+            color: #9C27B0;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .donation-button:hover {
+            background: #f5f5f5;
+            transform: translateY(-2px);
+        }
+
+        .contact-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .contact-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .contact-method {
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .contact-method-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .contact-method h4 {
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .contact-method p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .contact-method a {
+            color: #4ECDC4;
+            text-decoration: none;
+        }
+
+        .contact-method a:hover {
+            text-decoration: underline;
+        }
+
+        .testimonial-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .testimonial-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .testimonial {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #4ECDC4;
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            color: #555;
+            margin-bottom: 1rem;
+        }
+
+        .testimonial-author {
+            font-weight: 600;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .support-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .donation-section {
+                padding: 2rem 1rem;
+            }
+            
+            .donation-title {
+                font-size: 1.5rem;
+            }
+            
+            .donation-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be inserted here by shared-header.js -->
+
+    <div class="container">
+        <h1 class="page-title">Support ChatDys</h1>
+        <p class="page-subtitle">Help us continue providing free dysautonomia and Long Covid support to those who need it most</p>
+
+        <div class="support-grid">
+            <div class="support-card">
+                <div class="support-icon">💬</div>
+                <h3>Send Feedback</h3>
+                <p>Share your thoughts, report bugs, or suggest new features to help us improve ChatDys.</p>
+                <button class="support-button" onclick="openFeedbackModal()">Send Feedback</button>
+            </div>
+
+            <div class="support-card">
+                <div class="support-icon">⭐</div>
+                <h3>Upgrade to Premium</h3>
+                <p>Get unlimited questions, advanced features, and priority support while supporting our mission.</p>
+                <a href="../pages/premium-signup.html" class="support-button">Upgrade Now</a>
+            </div>
+
+            <div class="support-card">
+                <div class="support-icon">🤝</div>
+                <h3>Spread the Word</h3>
+                <p>Help others discover ChatDys by sharing with friends, family, and support groups.</p>
+                <button class="support-button secondary" onclick="shareWebsite()">Share ChatDys</button>
+            </div>
+        </div>
+
+        <div class="donation-section">
+            <h2 class="donation-title">Make a Donation</h2>
+            <p class="donation-text">Your generous donations help us keep ChatDys free for those who need it most and fund ongoing research and development.</p>
+            <div class="donation-buttons">
+                <a href="#" class="donation-button" onclick="donate(5)">$5</a>
+                <a href="#" class="donation-button" onclick="donate(10)">$10</a>
+                <a href="#" class="donation-button" onclick="donate(25)">$25</a>
+                <a href="#" class="donation-button" onclick="donate(50)">$50</a>
+                <a href="#" class="donation-button" onclick="donate('custom')">Custom Amount</a>
+            </div>
+        </div>
+
+        <div class="testimonial-section">
+            <h2 class="testimonial-title">What Our Users Say</h2>
+            
+            <div class="testimonial">
+                <p class="testimonial-text">"ChatDys has been a game-changer for managing my POTS. The personalized advice and symptom tracking have helped me understand my condition better than ever before."</p>
+                <p class="testimonial-author">- Sarah M., POTS Patient</p>
+            </div>
+
+            <div class="testimonial">
+                <p class="testimonial-text">"As someone with Long Covid, finding reliable information was challenging. ChatDys provides evidence-based answers that I can trust and share with my doctor."</p>
+                <p class="testimonial-author">- Michael R., Long Covid Survivor</p>
+            </div>
+
+            <div class="testimonial">
+                <p class="testimonial-text">"The community aspect of ChatDys has been invaluable. It's comforting to know I'm not alone in this journey and that there are others who understand."</p>
+                <p class="testimonial-author">- Jennifer L., Dysautonomia Patient</p>
+            </div>
+        </div>
+
+        <div class="contact-section">
+            <h2 class="contact-title">Get in Touch</h2>
+            <div class="contact-grid">
+                <div class="contact-method">
+                    <div class="contact-method-icon">📧</div>
+                    <h4>Email Support</h4>
+                    <p>For technical issues or general inquiries</p>
+                    <a href="mailto:support@chatdys.com">support@chatdys.com</a>
+                </div>
+
+                <div class="contact-method">
+                    <div class="contact-method-icon">💼</div>
+                    <h4>Business Inquiries</h4>
+                    <p>Partnerships, collaborations, and media</p>
+                    <a href="mailto:business@chatdys.com">business@chatdys.com</a>
+                </div>
+
+                <div class="contact-method">
+                    <div class="contact-method-icon">🔬</div>
+                    <h4>Research Collaboration</h4>
+                    <p>Academic partnerships and research opportunities</p>
+                    <a href="mailto:research@chatdys.com">research@chatdys.com</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Feedback Button -->
+    <button class="feedback-button" onclick="openFeedbackModal()">
+        <span class="feedback-button-icon">💬</span>
+        <span class="feedback-button-text">Feedback</span>
+    </button>
+
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="../js/shared-header.js"></script>
+    <script src="../js/feedback-modal.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        function shareWebsite() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'ChatDys - AI Assistant for Dysautonomia & Long Covid',
+                    text: 'Check out ChatDys, an AI-powered assistant for dysautonomia and Long Covid support!',
+                    url: window.location.origin
+                });
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                const url = window.location.origin;
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Website URL copied to clipboard!');
+                }).catch(() => {
+                    // Fallback if clipboard API is not available
+                    prompt('Copy this URL to share ChatDys:', url);
+                });
+            }
+        }
+
+        function donate(amount) {
+            // This would integrate with a payment processor like Stripe
+            if (amount === 'custom') {
+                const customAmount = prompt('Enter donation amount ($):');
+                if (customAmount && !isNaN(customAmount) && parseFloat(customAmount) > 0) {
+                    processDonation(parseFloat(customAmount));
+                }
+            } else {
+                processDonation(amount);
+            }
+        }
+
+        function processDonation(amount) {
+            // Placeholder for donation processing
+            alert(`Thank you for your generous donation of $${amount}! This feature will be available soon.`);
+            // In a real implementation, this would redirect to a payment processor
+        }
+
+        // Initialize Auth0 when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.authManager) {
+                await authManager.init();
+            }
+        });
+    </script>
+</body>
+</html>

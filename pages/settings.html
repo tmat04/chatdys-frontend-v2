@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - ChatDys</title>
+    <link rel="stylesheet" href="../css/shared-header.css">
+    <link rel="stylesheet" href="../css/onboarding-modal.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: calc(100vh - 140px);
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            color: #6c757d;
+        }
+
+        .settings-grid {
+            display: grid;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .settings-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-icon {
+            font-size: 1.2rem;
+        }
+
+        .section-description {
+            color: #6c757d;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .setting-info {
+            flex: 1;
+        }
+
+        .setting-label {
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 0.25rem;
+        }
+
+        .setting-description {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .setting-control {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: #2196F3;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(26px);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976D2;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: #2196F3;
+            border: 1px solid #2196F3;
+        }
+
+        .btn-secondary:hover {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f0f0f0;
+            border-top: 3px solid #2196F3;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-state {
+            text-align: center;
+            padding: 2rem;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 12px;
+            color: #856404;
+        }
+
+        .premium-section {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 1px solid #ffcc80;
+        }
+
+        .premium-badge {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #333;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .danger-zone {
+            border: 1px solid #dc3545;
+            background: rgba(220, 53, 69, 0.05);
+        }
+
+        .danger-zone .section-title {
+            color: #dc3545;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 1rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .setting-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .setting-control {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header will be inserted here by shared-header.js -->
+
+    <div class="main-container">
+        <div class="page-header">
+            <h1 class="page-title">Account Settings</h1>
+            <p class="page-subtitle">Manage your account preferences and security settings</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Loading your settings...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="error-state" style="display: none;">
+            <h3>Unable to Load Settings</h3>
+            <p id="errorMessage">Please try refreshing the page or contact support if the problem persists.</p>
+            <button class="btn btn-primary" onclick="loadSettings()" style="margin-top: 1rem;">Retry</button>
+        </div>
+
+        <!-- Settings Content -->
+        <div id="settingsContent" class="settings-grid" style="display: none;">
+            <!-- Account Information -->
+            <div class="settings-card">
+                <h2 class="section-title">
+                    <span class="section-icon">👤</span>
+                    Account Information
+                </h2>
+                <p class="section-description">View and manage your basic account information</p>
+                
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Email Address</div>
+                        <div class="setting-description" id="userEmail">Loading...</div>
+                    </div>
+                    <div class="setting-control">
+                        <span style="font-size: 0.8rem; color: #6c757d;">Managed by Auth0</span>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Account Type</div>
+                        <div class="setting-description">
+                            <span id="accountType">Free Plan</span>
+                            <span id="premiumBadge" class="premium-badge" style="display: none;">Premium</span>
+                        </div>
+                    </div>
+                    <div class="setting-control">
+                        <a href="premium-signup.html" class="btn btn-primary" id="upgradeButton">Upgrade to Premium</a>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Member Since</div>
+                        <div class="setting-description" id="memberSince">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Preferences -->
+            <div class="settings-card">
+                <h2 class="section-title">
+                    <span class="section-icon">🔔</span>
+                    Notification Preferences
+                </h2>
+                <p class="section-description">Control how and when you receive notifications</p>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Email Notifications</div>
+                        <div class="setting-description">Receive updates about new features and health tips</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="toggle-switch" id="emailNotifications" onclick="toggleSetting('emailNotifications')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Health Reminders</div>
+                        <div class="setting-description">Get reminders to track your symptoms and medications</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="toggle-switch active" id="healthReminders" onclick="toggleSetting('healthReminders')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Research Updates</div>
+                        <div class="setting-description">Receive notifications about new research and studies</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="toggle-switch" id="researchUpdates" onclick="toggleSetting('researchUpdates')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacy & Data -->
+            <div class="settings-card">
+                <h2 class="section-title">
+                    <span class="section-icon">🔒</span>
+                    Privacy & Data
+                </h2>
+                <p class="section-description">Control your data and privacy settings</p>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Data Sharing</div>
+                        <div class="setting-description">Allow anonymized data to help improve ChatDys for everyone</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="toggle-switch active" id="dataSharing" onclick="toggleSetting('dataSharing')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Analytics</div>
+                        <div class="setting-description">Help us improve by sharing usage analytics</div>
+                    </div>
+                    <div class="setting-control">
+                        <div class="toggle-switch active" id="analytics" onclick="toggleSetting('analytics')">
+                            <div class="toggle-slider"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Export Your Data</div>
+                        <div class="setting-description">Download a copy of all your ChatDys data</div>
+                    </div>
+                    <div class="setting-control">
+                        <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Premium Features -->
+            <div class="settings-card premium-section" id="premiumSection" style="display: none;">
+                <h2 class="section-title">
+                    <span class="section-icon">⭐</span>
+                    Premium Features
+                </h2>
+                <p class="section-description">Manage your premium subscription and features</p>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Subscription Status</div>
+                        <div class="setting-description" id="subscriptionStatus">Active Premium Subscription</div>
+                    </div>
+                    <div class="setting-control">
+                        <button class="btn btn-secondary" onclick="manageBilling()">Manage Billing</button>
+                    </div>
+                </div>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Chat History</div>
+                        <div class="setting-description">Access to unlimited conversation history</div>
+                    </div>
+                    <div class="setting-control">
+                        <a href="history.html" class="btn btn-primary">View History</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="settings-card danger-zone">
+                <h2 class="section-title">
+                    <span class="section-icon">⚠️</span>
+                    Danger Zone
+                </h2>
+                <p class="section-description">Irreversible and destructive actions</p>
+
+                <div class="setting-item">
+                    <div class="setting-info">
+                        <div class="setting-label">Delete Account</div>
+                        <div class="setting-description">Permanently delete your account and all associated data</div>
+                    </div>
+                    <div class="setting-control">
+                        <button class="btn btn-danger" onclick="confirmDeleteAccount()">Delete Account</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successMessage" class="success-message">
+            <strong>Settings saved!</strong> Your preferences have been updated successfully.
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="../config/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/shared-header.js"></script>
+    <script>
+        class SettingsManager {
+            constructor() {
+                this.authManager = null;
+                this.userSettings = {};
+                this.apiBaseUrl = window.Config?.BACKEND_BASE_URL || 'https://api.chatdys.com';
+                this.init();
+            }
+
+            async init() {
+                // Wait for auth manager
+                await this.waitForAuth();
+                
+                // Check if user is authenticated
+                if (!this.authManager?.isAuthenticated) {
+                    this.showError('Please sign in to view your settings.');
+                    return;
+                }
+
+                // Load user settings
+                await this.loadSettings();
+            }
+
+            async waitForAuth() {
+                return new Promise((resolve) => {
+                    let attempts = 0;
+                    const maxAttempts = 50;
+                    
+                    const checkAuth = () => {
+                        if (window.authManager && window.authManager.isAuthenticated !== undefined) {
+                            this.authManager = window.authManager;
+                            resolve();
+                        } else if (attempts < maxAttempts) {
+                            attempts++;
+                            setTimeout(checkAuth, 100);
+                        } else {
+                            resolve(); // Continue even if auth not available
+                        }
+                    };
+                    
+                    checkAuth();
+                });
+            }
+
+            async loadSettings() {
+                try {
+                    this.showLoading();
+                    
+                    // Get user data from auth manager
+                    const user = this.authManager.user;
+                    
+                    // Display user information
+                    this.displayUserInfo(user);
+                    
+                    // Load user preferences (this would come from your backend)
+                    // For now, we'll use default settings
+                    this.userSettings = {
+                        emailNotifications: false,
+                        healthReminders: true,
+                        researchUpdates: false,
+                        dataSharing: true,
+                        analytics: true
+                    };
+                    
+                    this.showContent();
+                    
+                } catch (error) {
+                    console.error('Error loading settings:', error);
+                    this.showError(`Failed to load settings: ${error.message}`);
+                }
+            }
+
+            displayUserInfo(user) {
+                // Basic user info
+                document.getElementById('userEmail').textContent = user.email || 'Not available';
+                document.getElementById('memberSince').textContent = this.formatDate(user.created_at);
+
+                // Premium status
+                const isPremium = user.is_premium || user.subscription === 'premium';
+                if (isPremium) {
+                    document.getElementById('accountType').textContent = 'Premium Plan';
+                    document.getElementById('premiumBadge').style.display = 'inline';
+                    document.getElementById('upgradeButton').style.display = 'none';
+                    document.getElementById('premiumSection').style.display = 'block';
+                } else {
+                    document.getElementById('accountType').textContent = 'Free Plan';
+                    document.getElementById('premiumBadge').style.display = 'none';
+                    document.getElementById('upgradeButton').style.display = 'inline-flex';
+                    document.getElementById('premiumSection').style.display = 'none';
+                }
+            }
+
+            showLoading() {
+                document.getElementById('loadingState').style.display = 'block';
+                document.getElementById('errorState').style.display = 'none';
+                document.getElementById('settingsContent').style.display = 'none';
+            }
+
+            showContent() {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'none';
+                document.getElementById('settingsContent').style.display = 'grid';
+            }
+
+            showError(message) {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                document.getElementById('settingsContent').style.display = 'none';
+                document.getElementById('errorMessage').textContent = message;
+            }
+
+            showSuccess(message) {
+                const successDiv = document.getElementById('successMessage');
+                successDiv.innerHTML = `<strong>Success!</strong> ${message}`;
+                successDiv.classList.add('show');
+                setTimeout(() => {
+                    successDiv.classList.remove('show');
+                }, 3000);
+            }
+
+            formatDate(dateString) {
+                if (!dateString) return 'Unknown';
+                return new Date(dateString).toLocaleDateString();
+            }
+        }
+
+        // Toggle setting function
+        function toggleSetting(settingId) {
+            const toggle = document.getElementById(settingId);
+            toggle.classList.toggle('active');
+            
+            // Here you would save the setting to your backend
+            console.log(`Setting ${settingId} toggled:`, toggle.classList.contains('active'));
+            
+            // Show success message
+            if (settingsManager) {
+                settingsManager.showSuccess('Setting updated successfully!');
+            }
+        }
+
+        // Export data function
+        function exportData() {
+            // This would call your backend to generate a data export
+            alert('Data export will be emailed to you within 24 hours.');
+        }
+
+        // Manage billing function
+        function manageBilling() {
+            // This would redirect to your billing portal (Stripe, etc.)
+            alert('Redirecting to billing portal...');
+        }
+
+        // Delete account function
+        function confirmDeleteAccount() {
+            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                if (confirm('This will permanently delete all your data. Are you absolutely sure?')) {
+                    // This would call your backend to delete the account
+                    alert('Account deletion request submitted. You will receive a confirmation email.');
+                }
+            }
+        }
+
+        // Initialize settings manager
+        let settingsManager;
+        document.addEventListener('DOMContentLoaded', () => {
+            settingsManager = new SettingsManager();
+        });
+
+        // Global function for retry button
+        function loadSettings() {
+            if (settingsManager) {
+                settingsManager.loadSettings();
+            }
+        }
+    </script>
+</body>
+</html>
