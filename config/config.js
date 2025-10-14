@@ -17,7 +17,7 @@ const Config = {
     AUTH0_SCOPE: 'openid profile email offline_access',
     
     // Backend API Configuration
-    BACKEND_BASE_URL: 'https://chatdys-backend.fly.dev',
+    BACKEND_BASE_URL: 'https://chatdys-backend-new.fly.dev',
     API_ENDPOINTS: {
         userSession: '/api/user/session',
         incrementQuestion: '/api/user/increment-question',
@@ -59,7 +59,7 @@ const Config = {
 if (window.location.hostname === 'chatdys.com') {
     // Production overrides
     Config.API_BASE_URL = 'https://api.chatdys.com/api';
-    Config.BACKEND_BASE_URL: 'https://chatdys-backend-new.fly.dev',
+    Config.BACKEND_BASE_URL = 'https://chatdys-backend-new.fly.dev';
 } else if (window.location.hostname.includes('staging')) {
     // Staging overrides
     Config.API_BASE_URL = 'https://staging-api.chatdys.com/api';
