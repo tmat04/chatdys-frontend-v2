@@ -620,4 +620,193 @@ const authManager = new AuthManager();
 window.authManager = authManager;
 
 // Export for global access
-window.AuthManager = AuthManager;
+window.AuthManager = AuthManager;/**
+ * Failover Enhancement for AuthManager
+ * Add this code to the END of your existing auth.js file (after line 623)
+ * This enhances the existing AuthManager class with backend failover
+ */
+
+// Wait for AuthManager to be fully loaded, then enhance it
+document.addEventListener('DOMContentLoaded', function() {
+    // Small delay to ensure authManager is initialized
+    setTimeout(function() {
+        if (window.authManager && window.Config) {
+            
+            // Store original methods
+            const originalGetUserSession = window.authManager.getUserSession.bind(window.authManager);
+            const originalCreateUserSession = window.authManager.createUserSession.bind(window.authManager);
+            
+            // Enhanced getUserSession with failover
+            window.authManager.getUserSession = async function() {
+                try {
+                    const token = await this.getToken();
+                    if (!token) {
+                        console.log('No token available for getUserSession');
+                        return null;
+                    }
+
+                    console.log('Fetching user session with failover...');
+                    
+                    // Try primary backend first
+                    let response;
+                    let currentUrl = Config.currentBackendUrl || Config.BACKEND_BASE_URL;
+                    
+                    try {
+                        response = await fetch(`${currentUrl}${Config.API_ENDPOINTS.USER_SESSION}`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                        console.log(`✅ Primary backend successful: ${currentUrl}`);
+                        
+                    } catch (error) {
+                        console.warn(`❌ Primary backend failed (${currentUrl}): ${error.message}`);
+                        
+                        // Try fallback backend
+                        if (Config.BACKEND_FALLBACK_URL && currentUrl !== Config.BACKEND_FALLBACK_URL) {
+                            console.log(`🔄 Trying fallback backend: ${Config.BACKEND_FALLBACK_URL}`);
+                            
+                            try {
+                                response = await fetch(`${Config.BACKEND_FALLBACK_URL}${Config.API_ENDPOINTS.USER_SESSION}`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+                                
+                                if (!response.ok) {
+                                    throw new Error(`HTTP ${response.status}`);
+                                }
+                                
+                                // Update current backend URL for future requests
+                                Config.currentBackendUrl = Config.BACKEND_FALLBACK_URL;
+                                Config.isUsingFallback = true;
+                                this.apiBaseUrl = Config.BACKEND_FALLBACK_URL;
+                                
+                                console.log(`✅ Fallback backend successful: ${Config.BACKEND_FALLBACK_URL}`);
+                                
+                            } catch (fallbackError) {
+                                console.error(`❌ Fallback backend also failed: ${fallbackError.message}`);
+                                throw new Error(`Both backends failed. Primary: ${error.message}, Fallback: ${fallbackError.message}`);
+                            }
+                        } else {
+                            throw error;
+                        }
+                    }
+
+                    if (response && response.ok) {
+                        const data = await response.json();
+                        console.log('User session data received:', data);
+                        return data;
+                    }
+                    return null;
+                    
+                } catch (error) {
+                    console.error('Error getting user session with failover:', error);
+                    return null;
+                }
+            };
+
+            // Enhanced createUserSession with failover
+            window.authManager.createUserSession = async function() {
+                try {
+                    const token = await this.getToken();
+                    if (!token) {
+                        console.log('No token available for createUserSession');
+                        return null;
+                    }
+
+                    console.log('Creating user session with failover...');
+                    
+                    // Try primary backend first
+                    let response;
+                    let currentUrl = Config.currentBackendUrl || Config.BACKEND_BASE_URL;
+                    
+                    const requestBody = JSON.stringify({
+                        email: this.user.email,
+                        name: this.user.name,
+                        auth0_user_id: this.user.sub
+                    });
+                    
+                    try {
+                        response = await fetch(`${currentUrl}${Config.API_ENDPOINTS.USER_SESSION}`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: requestBody
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                        console.log(`✅ Primary backend successful: ${currentUrl}`);
+                        
+                    } catch (error) {
+                        console.warn(`❌ Primary backend failed (${currentUrl}): ${error.message}`);
+                        
+                        // Try fallback backend
+                        if (Config.BACKEND_FALLBACK_URL && currentUrl !== Config.BACKEND_FALLBACK_URL) {
+                            console.log(`🔄 Trying fallback backend: ${Config.BACKEND_FALLBACK_URL}`);
+                            
+                            try {
+                                response = await fetch(`${Config.BACKEND_FALLBACK_URL}${Config.API_ENDPOINTS.USER_SESSION}`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: requestBody
+                                });
+                                
+                                if (!response.ok) {
+                                    throw new Error(`HTTP ${response.status}`);
+                                }
+                                
+                                // Update current backend URL for future requests
+                                Config.currentBackendUrl = Config.BACKEND_FALLBACK_URL;
+                                Config.isUsingFallback = true;
+                                this.apiBaseUrl = Config.BACKEND_FALLBACK_URL;
+                                
+                                console.log(`✅ Fallback backend successful: ${Config.BACKEND_FALLBACK_URL}`);
+                                
+                            } catch (fallbackError) {
+                                console.error(`❌ Fallback backend also failed: ${fallbackError.message}`);
+                                throw new Error(`Both backends failed. Primary: ${error.message}, Fallback: ${fallbackError.message}`);
+                            }
+                        } else {
+                            throw error;
+                        }
+                    }
+
+                    if (response && response.ok) {
+                        const data = await response.json();
+                        console.log('User session created:', data);
+                        return data;
+                    }
+                    
+                } catch (error) {
+                    console.error('Error creating user session with failover:', error);
+                    return null;
+                }
+            };
+
+            console.log('✅ AuthManager enhanced with backend failover support');
+            console.log(`🔧 Primary backend: ${Config.BACKEND_BASE_URL}`);
+            console.log(`🔧 Fallback backend: ${Config.BACKEND_FALLBACK_URL}`);
+            
+        } else {
+            console.warn('⚠️ AuthManager or Config not found, failover enhancement skipped');
+        }
+    }, 1000); // 1 second delay to ensure everything is loaded
+});
