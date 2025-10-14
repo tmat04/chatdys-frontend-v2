@@ -17,7 +17,7 @@ const Config = {
     AUTH0_SCOPE: 'openid profile email offline_access',
     
     // Backend API Configuration
-    BACKEND_BASE_URL: 'https://chatdys-backend.fly.dev',
+    BACKEND_BASE_URL: 'https://chatdys-backend-new.fly.dev',
     API_ENDPOINTS: {
         userSession: '/api/user/session',
         incrementQuestion: '/api/user/increment-question',
