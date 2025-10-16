@@ -1,201 +1,89 @@
-/**
- * ChatDys Frontend Configuration
- * Environment-specific settings and authentication configuration with backend failover
- */
-
-const Config = {
-    // API Configuration with failover
-    API_BASE_URL: window.location.hostname === 'localhost' 
-        ? 'http://localhost:5000/api' 
-        : 'https://api.chatdys.com/api',
-    
+// ChatDys Configuration
+window.Config = {
     // Auth0 Configuration
     AUTH0_DOMAIN: 'dev-5040302010.us.auth0.com',
     AUTH0_CLIENT_ID: 'fqzwP9fpJrY0c7FINxADguJhxjrOqnwV',
-    AUTH0_AUDIENCE: 'https://api.chatdys.com/',
     AUTH0_REDIRECT_URI: window.location.origin,
-    AUTH0_SCOPE: 'openid profile email offline_access',
+    AUTH0_AUDIENCE: 'https://api.chatdys.com/',
+    AUTH0_SCOPE: 'openid profile email',
+
+    // Backend Configuration
+    // IMPORTANT: Replace this with your actual deployed backend URL
+    // For Railway: https://your-app-name.up.railway.app
+    // For Render: https://your-app-name.onrender.com
+    // For Fly.io: https://your-app-name.fly.dev
+    BACKEND_BASE_URL: 'http://localhost:8000',  // Change this to your deployed backend URL
     
-    // Backend API Configuration with failover
-    BACKEND_BASE_URL: 'https://chatdys-backend-new.fly.dev',
-    BACKEND_FALLBACK_URL: 'https://chatdys-backend.fly.dev',
-    
+    // Optional: Fallback backend URL for redundancy
+    BACKEND_FALLBACK_URL: null,  // Set to a second backend URL if you have one
+
+    // API Endpoints
     API_ENDPOINTS: {
-        userSession: '/api/user/session',
-        incrementQuestion: '/api/user/increment-question',
-        completeProfile: '/api/user/complete-profile',
-        query: '/api/query',
-        conversations: '/api/conversations',
-        payments: '/api/payments'
+        // User endpoints
+        USER_SESSION: '/api/user/session',
+        USER_PROFILE: '/api/user/profile',
+        INCREMENT_QUESTION: '/api/user/increment-question',
+        COMPLETE_PROFILE: '/api/user/complete-profile',
+        USER_PREFERENCES: '/api/user/preferences',
+        USER_USAGE: '/api/user/usage',
+        CHECK_PREMIUM: '/api/user/check-premium',
+        DELETE_ACCOUNT: '/api/user/account',
+        
+        // Auth endpoints
+        VALIDATE_TOKEN: '/api/auth/validate-token',
+        CHECK_AUTH: '/api/auth/check-auth',
+        USER_INFO: '/api/auth/user-info',
+        REFRESH_USER: '/api/auth/refresh-user',
+        
+        // Chat endpoints
+        QUERY: '/api/query',
+        CONVERSATIONS: '/api/conversations',
+        CONVERSATION_DETAIL: '/api/conversations/',  // append conversation_id
+        DELETE_CONVERSATION: '/api/conversations/',  // append conversation_id
+        
+        // Payment endpoints
+        CREATE_CHECKOUT: '/api/payments/create-checkout-session',
+        WEBHOOK: '/api/payments/webhook',
+        CANCEL_SUBSCRIPTION: '/api/payments/cancel-subscription',
+        
+        // Health check
+        HEALTH: '/health'
     },
-    
-    // Application Settings
+
+    // App Configuration
     APP_NAME: 'ChatDys',
-    APP_VERSION: '2.0.0',
-    
-    // Feature Flags
-    FEATURES: {
-        CONVERSATION_HISTORY: true,
-        PREMIUM_SUBSCRIPTIONS: true,
-        HEALTH_TRACKER: true,
-        COMMUNITY_FORUM: false
-    },
-    
-    // UI Settings
-    UI: {
-        THEME: 'default',
-        ANIMATION_DURATION: 300,
-        DEBOUNCE_DELAY: 500
-    },
+    VERSION: '1.0.0',
     
     // Limits
     LIMITS: {
         FREE_DAILY_QUESTIONS: 5,
-        FREE_MONTHLY_QUESTIONS: 10,
-        MAX_MESSAGE_LENGTH: 2000,
-        MAX_CONVERSATION_TITLE_LENGTH: 100
+        PREMIUM_DAILY_QUESTIONS: 1000
+    },
+    
+    // Feature Flags
+    FEATURES: {
+        ONBOARDING_MODAL: true,
+        PREMIUM_FEATURES: true,
+        CHAT_HISTORY: true,
+        HUBSPOT_INTEGRATION: true
+    },
+    
+    // Stripe Configuration (for premium features)
+    STRIPE_PUBLISHABLE_KEY: 'pk_test_your-stripe-publishable-key',  // Replace with your actual key
+    
+    // Premium Pricing
+    PREMIUM_PRICE: {
+        MONTHLY: 9.99,
+        YEARLY: 99.99
     }
 };
 
-// Environment-specific overrides
-if (window.location.hostname === 'chatdys.com') {
-    // Production overrides
-    Config.API_BASE_URL = 'https://api.chatdys.com/api';
-    Config.BACKEND_BASE_URL = 'https://chatdys-backend-new.fly.dev';
-    Config.BACKEND_FALLBACK_URL = 'https://chatdys-backend.fly.dev';
-} else if (window.location.hostname.includes('staging')) {
-    // Staging overrides
-    Config.API_BASE_URL = 'https://staging-api.chatdys.com/api';
-    Config.BACKEND_BASE_URL = 'https://staging-chatdys-backend.fly.dev';
-    Config.BACKEND_FALLBACK_URL = 'https://chatdys-backend.fly.dev';
-} else if (window.location.hostname === 'localhost') {
-    // Development overrides
-    Config.BACKEND_BASE_URL = 'http://localhost:8000';
-    Config.BACKEND_FALLBACK_URL = 'https://chatdys-backend.fly.dev';
-}
-
-// Backend failover functionality
+// Initialize backend tracking
 Config.currentBackendUrl = Config.BACKEND_BASE_URL;
 Config.isUsingFallback = false;
 
-Config.switchToFallback = function() {
-    if (!this.isUsingFallback && this.BACKEND_FALLBACK_URL) {
-        console.log(`🔄 Switching from ${this.currentBackendUrl} to fallback ${this.BACKEND_FALLBACK_URL}`);
-        this.currentBackendUrl = this.BACKEND_FALLBACK_URL;
-        this.isUsingFallback = true;
-        return true;
-    }
-    return false;
-};
-
-Config.resetToPrimary = function() {
-    if (this.isUsingFallback) {
-        console.log(`🔄 Resetting to primary backend ${this.BACKEND_BASE_URL}`);
-        this.currentBackendUrl = this.BACKEND_BASE_URL;
-        this.isUsingFallback = false;
-    }
-};
-
-// Enhanced fetch function with automatic failover
-Config.fetchWithFailover = async function(endpoint, options = {}) {
-    const makeRequest = async (baseUrl) => {
-        const url = `${baseUrl}${endpoint}`;
-        console.log(`🌐 Making request to: ${url}`);
-        
-        const response = await fetch(url, {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        return response;
-    };
-
-    try {
-        // Try primary backend
-        return await makeRequest(this.currentBackendUrl);
-    } catch (error) {
-        console.warn(`❌ Primary backend failed: ${error.message}`);
-        
-        // Try fallback if available and not already using it
-        if (this.switchToFallback()) {
-            try {
-                console.log(`🔄 Trying fallback backend...`);
-                return await makeRequest(this.currentBackendUrl);
-            } catch (fallbackError) {
-                console.error(`❌ Fallback backend also failed: ${fallbackError.message}`);
-                throw new Error(`Both backends failed. Primary: ${error.message}, Fallback: ${fallbackError.message}`);
-            }
-        } else {
-            throw error;
-        }
-    }
-};
-
-// Create AUTH_CONFIG object for compatibility with auth-manager.js
-const AUTH_CONFIG = {
-    auth0: {
-        domain: Config.AUTH0_DOMAIN,
-        clientId: Config.AUTH0_CLIENT_ID,
-        audience: Config.AUTH0_AUDIENCE,
-        redirectUri: Config.AUTH0_REDIRECT_URI,
-        scope: Config.AUTH0_SCOPE
-    },
-    api: {
-        baseUrl: Config.BACKEND_BASE_URL,
-        fallbackUrl: Config.BACKEND_FALLBACK_URL,
-        endpoints: Config.API_ENDPOINTS
-    },
-    app: {
-        freeUserQuestionLimit: Config.LIMITS.FREE_DAILY_QUESTIONS,
-        maxCharacterLimit: Config.LIMITS.MAX_MESSAGE_LENGTH
-    }
-};
-
-// Export configurations
-window.Config = Config;
-window.AUTH_CONFIG = AUTH_CONFIG;
-
-// Debug logging for production troubleshooting
-console.log('ChatDys Config loaded with failover:', {
-    environment: window.location.hostname,
-    primaryBackend: Config.BACKEND_BASE_URL,
-    fallbackBackend: Config.BACKEND_FALLBACK_URL,
-    currentBackend: Config.currentBackendUrl,
-    auth0Domain: Config.AUTH0_DOMAIN
-});
-
-// Health check both backends on load
-(async function checkBackendHealth() {
-    const checkHealth = async (url, name) => {
-        try {
-            const response = await fetch(`${url}/health`, { 
-                method: 'GET',
-                timeout: 5000 
-            });
-            if (response.ok) {
-                const data = await response.json();
-                console.log(`✅ ${name} backend healthy:`, data);
-                return true;
-            }
-        } catch (error) {
-            console.warn(`❌ ${name} backend unhealthy:`, error.message);
-            return false;
-        }
-    };
-
-    const primaryHealthy = await checkHealth(Config.BACKEND_BASE_URL, 'Primary');
-    const fallbackHealthy = await checkHealth(Config.BACKEND_FALLBACK_URL, 'Fallback');
-    
-    // Switch to fallback if primary is down but fallback is up
-    if (!primaryHealthy && fallbackHealthy && !Config.isUsingFallback) {
-        Config.switchToFallback();
-        console.log('🔄 Automatically switched to fallback backend due to primary being unhealthy');
-    }
-})();
+// For debugging - remove in production
+console.log('✅ Config loaded successfully');
+console.log('🔧 Auth0 Domain:', Config.AUTH0_DOMAIN);
+console.log('🔧 Backend URL:', Config.BACKEND_BASE_URL);
+console.log('🔧 Redirect URI:', Config.AUTH0_REDIRECT_URI);

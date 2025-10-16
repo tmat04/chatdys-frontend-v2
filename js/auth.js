@@ -5,10 +5,16 @@ class AuthManager {
         this.isAuthenticated = false;
         this.apiBaseUrl = Config.BACKEND_BASE_URL;
         this.onboardingModal = null;
+        this.tokenRefreshInterval = null;
     }
 
     async init() {
         try {
+            console.log('🔐 Initializing Auth0...');
+            console.log('📍 Domain:', Config.AUTH0_DOMAIN);
+            console.log('📍 Client ID:', Config.AUTH0_CLIENT_ID);
+            console.log('📍 Audience:', Config.AUTH0_AUDIENCE);
+            
             // Initialize Auth0
             this.auth0Client = await auth0.createAuth0Client({
                 domain: Config.AUTH0_DOMAIN,
@@ -17,25 +23,33 @@ class AuthManager {
                     redirect_uri: Config.AUTH0_REDIRECT_URI,
                     audience: Config.AUTH0_AUDIENCE,
                     scope: Config.AUTH0_SCOPE
-                }
+                },
+                cacheLocation: 'localstorage',  // Persist tokens across page refreshes
+                useRefreshTokens: true  // Enable refresh tokens for long-lived sessions
             });
+
+            console.log('✅ Auth0 client created successfully');
 
             // Check if user is authenticated
             this.isAuthenticated = await this.auth0Client.isAuthenticated();
+            console.log('🔍 Is authenticated:', this.isAuthenticated);
 
             if (this.isAuthenticated) {
                 this.user = await this.auth0Client.getUser();
+                console.log('👤 User from Auth0:', this.user);
                 await this.handleAuthenticatedUser();
             }
 
             // Handle redirect callback
             if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
+                console.log('🔄 Handling Auth0 redirect callback...');
                 await this.handleRedirectCallback();
             }
 
             this.updateUI();
         } catch (error) {
-            console.error('Auth initialization error:', error);
+            console.error('❌ Auth initialization error:', error);
+            this.showErrorToast('Authentication initialization failed. Please refresh the page.');
         }
     }
 
@@ -46,48 +60,78 @@ class AuthManager {
             
             if (this.isAuthenticated) {
                 this.user = await this.auth0Client.getUser();
+                console.log('✅ User authenticated via callback:', this.user);
                 await this.handleAuthenticatedUser();
             }
 
             // Clean up URL
             window.history.replaceState({}, document.title, window.location.pathname);
         } catch (error) {
-            console.error('Redirect callback error:', error);
+            console.error('❌ Redirect callback error:', error);
+            this.showErrorToast('Login failed. Please try again.');
         }
     }
 
     async handleAuthenticatedUser() {
         try {
-            // Get user session data from backend
-            const sessionData = await this.getUserSession();
+            console.log('🔄 Handling authenticated user...');
             
-            if (sessionData) {
-                // Merge backend data with Auth0 user data
-                this.user = { ...this.user, ...sessionData };
+            // IMPORTANT: Don't fail the entire auth flow if backend is down
+            // Keep user logged in with Auth0 data even if backend fails
+            
+            try {
+                // Get user session data from backend
+                const sessionData = await this.getUserSession();
                 
-                // Check if profile is completed
-                if (!sessionData.profile_completed) {
-                    // Show onboarding modal for first-time users
-                    this.showOnboardingModal();
+                if (sessionData) {
+                    console.log('✅ Got user session from backend:', sessionData);
+                    // Merge backend data with Auth0 user data
+                    this.user = { ...this.user, ...sessionData };
+                    
+                    // Check if profile is completed
+                    if (!sessionData.profile_completed && !sessionData.onboarding_completed) {
+                        // Show onboarding modal for first-time users
+                        this.showOnboardingModal();
+                    } else {
+                        // Update question count and other UI elements
+                        this.updateQuestionCount(sessionData.daily_question_count || 0);
+                    }
                 } else {
-                    // Update question count and other UI elements
-                    this.updateQuestionCount(sessionData.daily_question_count || 0);
+                    console.log('⚠️ No session data from backend, user might be new');
+                    // User might be new, try to create session
+                    const newSession = await this.createUserSession();
+                    if (newSession) {
+                        this.user = { ...this.user, ...newSession };
+                    }
+                    this.showOnboardingModal();
                 }
-            } else {
-                // First time user - create session and show onboarding
-                await this.createUserSession();
-                this.showOnboardingModal();
+            } catch (backendError) {
+                console.warn('⚠️ Backend communication failed, but user is still logged in via Auth0:', backendError);
+                // User stays logged in with Auth0 data
+                // Show a warning but don't break the auth flow
+                this.showWarningToast('Some features may be limited. Backend connection issue.');
             }
+            
+            // Sync to HubSpot if enabled
+            if (Config.FEATURES.HUBSPOT_INTEGRATION) {
+                this.syncToHubSpot().catch(err => console.warn('HubSpot sync failed:', err));
+            }
+            
         } catch (error) {
-            console.error('Error handling authenticated user:', error);
-            // Still show onboarding if there's an error
-            this.showOnboardingModal();
+            console.error('❌ Error handling authenticated user:', error);
+            // Don't throw - keep user logged in
         }
     }
 
     async getUserSession() {
         try {
             const token = await this.getToken();
+            if (!token) {
+                console.warn('⚠️ No token available for getUserSession');
+                return null;
+            }
+
+            console.log('📡 Fetching user session from backend...');
             const response = await fetch(`${this.apiBaseUrl}${Config.API_ENDPOINTS.USER_SESSION}`, {
                 method: 'GET',
                 headers: {
@@ -97,11 +141,15 @@ class AuthManager {
             });
 
             if (response.ok) {
-                return await response.json();
+                const data = await response.json();
+                console.log('✅ User session retrieved successfully');
+                return data;
+            } else {
+                console.warn('⚠️ Backend returned non-OK status:', response.status);
+                return null;
             }
-            return null;
         } catch (error) {
-            console.error('Error getting user session:', error);
+            console.error('❌ Error getting user session:', error);
             return null;
         }
     }
@@ -109,6 +157,12 @@ class AuthManager {
     async createUserSession() {
         try {
             const token = await this.getToken();
+            if (!token) {
+                console.warn('⚠️ No token available for createUserSession');
+                return null;
+            }
+
+            console.log('📡 Creating user session in backend...');
             const response = await fetch(`${this.apiBaseUrl}${Config.API_ENDPOINTS.USER_SESSION}`, {
                 method: 'POST',
                 headers: {
@@ -123,10 +177,61 @@ class AuthManager {
             });
 
             if (response.ok) {
-                return await response.json();
+                const data = await response.json();
+                console.log('✅ User session created successfully');
+                return data;
+            } else {
+                console.warn('⚠️ Failed to create user session:', response.status);
+                return null;
             }
         } catch (error) {
-            console.error('Error creating user session:', error);
+            console.error('❌ Error creating user session:', error);
+            return null;
+        }
+    }
+
+    async syncToHubSpot() {
+        try {
+            if (!this.user || !this.user.email) {
+                console.log('⚠️ No user data for HubSpot sync');
+                return;
+            }
+
+            const token = await this.getToken();
+            if (!token) return;
+
+            console.log('📡 Syncing user to HubSpot CRM...');
+            
+            const hubspotData = {
+                email: this.user.email,
+                firstname: this.user.given_name || this.user.name?.split(' ')[0] || '',
+                lastname: this.user.family_name || this.user.name?.split(' ').slice(1).join(' ') || '',
+                phone: this.user.phone_number || '',
+                lifecyclestage: this.user.is_premium ? 'customer' : 'lead',
+                hs_lead_status: this.user.profile_completed ? 'OPEN' : 'NEW',
+                chatdys_user_id: this.user.id || this.user.sub,
+                chatdys_signup_date: new Date().toISOString(),
+                chatdys_is_premium: this.user.is_premium ? 'true' : 'false',
+                chatdys_question_count: this.user.question_count || 0
+            };
+
+            const response = await fetch(`${this.apiBaseUrl}/api/hubspot/sync-contact`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(hubspotData)
+            });
+
+            if (response.ok) {
+                console.log('✅ User synced to HubSpot successfully');
+            } else {
+                console.warn('⚠️ HubSpot sync failed:', response.status);
+            }
+        } catch (error) {
+            console.error('❌ HubSpot sync error:', error);
+            // Don't throw - this is not critical
         }
     }
 
@@ -256,38 +361,32 @@ class AuthManager {
             // Respiratory/Cardiac
             'Exercise Intolerance',
             'Shortness of Breath / Dyspnea',
-            'Chest Pain / Palpitations',
+            'Palpitations / Tachycardia',
             
             // Other
+            'Chronic Pain',
             'Sleep Disorders',
-            'Multiple Chemical Sensitivity',
-            'Other Chronic Condition',
-            'Prefer not to say'
+            'Anxiety / Depression',
+            'Other (please specify in preferences)'
         ];
 
         return conditions.map(condition => `
             <label class="condition-checkbox">
                 <input type="checkbox" name="conditions" value="${condition}">
-                <span class="checkmark"></span>
-                ${condition}
+                <span>${condition}</span>
             </label>
         `).join('');
     }
 
     getHowHeardOptions() {
         const options = [
-            'Search Engine (Google, Bing, etc.)',
-            'Social Media (Facebook, Instagram, TikTok)',
-            'Healthcare Provider Recommendation',
-            'Long-Covid Support Group',
-            'ME/CFS Support Group',
-            'Dysautonomia Support Group',
-            'Other Support Group or Forum',
-            'Friend or Family Recommendation',
-            'Medical Conference or Event',
+            'Social Media (Facebook, Instagram, Twitter)',
+            'Reddit',
+            'Support Group',
+            'Healthcare Provider',
+            'Friend or Family',
+            'Search Engine (Google, Bing)',
             'Online Article or Blog',
-            'YouTube or Video Platform',
-            'Patient Advocacy Organization',
             'Other'
         ];
 
@@ -297,66 +396,77 @@ class AuthManager {
     async handleOnboardingSubmit(e) {
         e.preventDefault();
         
+        const form = e.target;
         const submitButton = document.getElementById('submitOnboarding');
         const errorDiv = document.getElementById('onboardingError');
         const loadingDiv = document.getElementById('onboardingLoading');
         
-        // Show loading state
-        submitButton.disabled = true;
-        errorDiv.style.display = 'none';
-        loadingDiv.style.display = 'block';
-
         try {
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
+            // Show loading
+            submitButton.disabled = true;
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
             
-            // Get selected conditions
-            const selectedConditions = Array.from(document.querySelectorAll('input[name="conditions"]:checked'))
+            // Get form data
+            const formData = new FormData(form);
+            const selectedConditions = Array.from(form.querySelectorAll('input[name="conditions"]:checked'))
                 .map(cb => cb.value);
             
-            if (selectedConditions.length === 0) {
-                throw new Error('Please select at least one health condition.');
-            }
-
-            // Prepare submission data
-            const submitData = {
-                first_name: data.first_name,
-                last_name: data.last_name,
-                phone_number: data.phone_number || '',
-                location: data.location || '',
-                primary_condition: selectedConditions.join(', '),
+            // Prepare profile data
+            const profileData = {
+                age: null,  // You can add age field if needed
                 conditions: selectedConditions,
-                how_heard_about_us: data.how_heard_about_us || ''
+                symptoms: [],  // Can be collected in a future step
+                medications: [],  // Can be collected in a future step
+                preferences: {
+                    first_name: formData.get('first_name'),
+                    last_name: formData.get('last_name'),
+                    phone_number: formData.get('phone_number'),
+                    location: formData.get('location'),
+                    how_heard_about_us: formData.get('how_heard_about_us')
+                }
             };
-
-            // Submit to backend
+            
+            // Send to backend
             const token = await this.getToken();
-            const response = await fetch(`${this.apiBaseUrl}${Config.API_ENDPOINTS.PROFILE_COMPLETE}`, {
+            const response = await fetch(`${this.apiBaseUrl}${Config.API_ENDPOINTS.COMPLETE_PROFILE}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(submitData)
+                body: JSON.stringify(profileData)
             });
-
+            
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.detail || 'Failed to complete profile');
+                throw new Error('Failed to complete profile');
             }
-
-            // Success - update user data and hide modal
+            
             const result = await response.json();
-            this.user = { ...this.user, ...result, profile_completed: true };
+            
+            // Update user data
+            this.user.profile_completed = true;
+            this.user.onboarding_completed = true;
+            this.user.conditions = selectedConditions;
+            this.user.preferences = profileData.preferences;
+            
+            // Sync to HubSpot with updated info
+            if (Config.FEATURES.HUBSPOT_INTEGRATION) {
+                await this.syncToHubSpot();
+            }
+            
+            // Hide modal
             this.hideOnboardingModal();
-            this.updateUI();
             
             // Show success message
-            this.showSuccessMessage('Profile completed successfully! Welcome to ChatDys.');
-
+            this.showSuccessToast('Profile completed successfully! Welcome to ChatDys.');
+            
+            // Update UI
+            this.updateUI();
+            
         } catch (error) {
             console.error('Onboarding error:', error);
-            errorDiv.textContent = error.message;
+            errorDiv.textContent = 'Failed to complete profile. Please try again.';
             errorDiv.style.display = 'block';
         } finally {
             submitButton.disabled = false;
@@ -365,38 +475,84 @@ class AuthManager {
     }
 
     async skipOnboarding() {
-        try {
-            // Mark profile as completed but with minimal data
-            const token = await this.getToken();
-            const response = await fetch(`${this.apiBaseUrl}${Config.API_ENDPOINTS.PROFILE_COMPLETE}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    first_name: this.user?.given_name || 'User',
-                    last_name: this.user?.family_name || '',
-                    primary_condition: 'Not specified',
-                    conditions: ['Not specified']
-                })
-            });
-
-            if (response.ok) {
-                this.user = { ...this.user, profile_completed: true };
-                this.hideOnboardingModal();
-                this.updateUI();
-            }
-        } catch (error) {
-            console.error('Skip onboarding error:', error);
-            // Hide modal anyway
-            this.hideOnboardingModal();
-            this.updateUI();
-        }
+        // Mark as skipped but don't complete profile
+        this.hideOnboardingModal();
+        this.showInfoToast('You can complete your profile later in Settings.');
     }
 
-    showSuccessMessage(message) {
-        // Create temporary success message
+    showErrorToast(message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-toast';
+        errorDiv.textContent = message;
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(errorDiv);
+        
+        setTimeout(() => {
+            errorDiv.remove();
+        }, 5000);
+    }
+
+    showWarningToast(message) {
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'warning-toast';
+        warningDiv.textContent = message;
+        warningDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #ff9800;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(warningDiv);
+        
+        setTimeout(() => {
+            warningDiv.remove();
+        }, 5000);
+    }
+
+    showInfoToast(message) {
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'info-toast';
+        infoDiv.textContent = message;
+        infoDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2196F3;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+        
+        document.body.appendChild(infoDiv);
+        
+        setTimeout(() => {
+            infoDiv.remove();
+        }, 3000);
+    }
+
+    showSuccessToast(message) {
         const successDiv = document.createElement('div');
         successDiv.className = 'success-toast';
         successDiv.textContent = message;
@@ -415,7 +571,6 @@ class AuthManager {
         
         document.body.appendChild(successDiv);
         
-        // Remove after 3 seconds
         setTimeout(() => {
             successDiv.remove();
         }, 3000);
@@ -423,29 +578,52 @@ class AuthManager {
 
     async login() {
         try {
+            console.log('🔐 Initiating login...');
             await this.auth0Client.loginWithRedirect();
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('❌ Login error:', error);
+            this.showErrorToast('Login failed. Please try again.');
         }
     }
 
     async logout() {
         try {
+            console.log('🔐 Logging out...');
             await this.auth0Client.logout({
                 logoutParams: {
                     returnTo: window.location.origin
                 }
             });
         } catch (error) {
-            console.error('Logout error:', error);
+            console.error('❌ Logout error:', error);
+            this.showErrorToast('Logout failed. Please try again.');
         }
     }
 
     async getToken() {
         try {
-            return await this.auth0Client.getTokenSilently();
+            const token = await this.auth0Client.getTokenSilently({
+                cacheMode: 'on',
+                timeoutInSeconds: 60
+            });
+            return token;
         } catch (error) {
-            console.error('Token error:', error);
+            console.error('❌ Token error:', error);
+            
+            // If token is expired or invalid, try to re-authenticate
+            if (error.error === 'login_required' || error.error === 'consent_required') {
+                console.log('🔄 Token expired, redirecting to login...');
+                await this.login();
+            } else if (error.error === 'timeout') {
+                console.warn('⚠️ Token fetch timeout, retrying...');
+                // Retry once
+                try {
+                    return await this.auth0Client.getTokenSilently({ cacheMode: 'off' });
+                } catch (retryError) {
+                    console.error('❌ Token retry failed:', retryError);
+                }
+            }
+            
             return null;
         }
     }
@@ -458,6 +636,10 @@ class AuthManager {
             }
 
             const token = await this.getToken();
+            if (!token) {
+                throw new Error('Authentication required. Please log in again.');
+            }
+
             const response = await fetch(`${this.apiBaseUrl}${Config.API_ENDPOINTS.QUERY}`, {
                 method: 'POST',
                 headers: {
@@ -481,7 +663,7 @@ class AuthManager {
 
             return result;
         } catch (error) {
-            console.error('Send message error:', error);
+            console.error('❌ Send message error:', error);
             throw error;
         }
     }
@@ -489,6 +671,8 @@ class AuthManager {
     async incrementQuestionCount() {
         try {
             const token = await this.getToken();
+            if (!token) return;
+
             const response = await fetch(`${this.apiBaseUrl}${Config.API_ENDPOINTS.INCREMENT_QUESTION}`, {
                 method: 'POST',
                 headers: {
@@ -502,7 +686,7 @@ class AuthManager {
                 this.updateQuestionCount(result.daily_question_count);
             }
         } catch (error) {
-            console.error('Increment question error:', error);
+            console.error('❌ Increment question error:', error);
         }
     }
 
@@ -613,6 +797,14 @@ class AuthManager {
             }
         }
     }
+
+    isAuthenticatedUser() {
+        return this.isAuthenticated;
+    }
+
+    getUser() {
+        return this.user;
+    }
 }
 
 // Initialize auth manager
@@ -620,193 +812,6 @@ const authManager = new AuthManager();
 window.authManager = authManager;
 
 // Export for global access
-window.AuthManager = AuthManager;/**
- * Failover Enhancement for AuthManager
- * Add this code to the END of your existing auth.js file (after line 623)
- * This enhances the existing AuthManager class with backend failover
- */
+window.AuthManager = AuthManager;
 
-// Wait for AuthManager to be fully loaded, then enhance it
-document.addEventListener('DOMContentLoaded', function() {
-    // Small delay to ensure authManager is initialized
-    setTimeout(function() {
-        if (window.authManager && window.Config) {
-            
-            // Store original methods
-            const originalGetUserSession = window.authManager.getUserSession.bind(window.authManager);
-            const originalCreateUserSession = window.authManager.createUserSession.bind(window.authManager);
-            
-            // Enhanced getUserSession with failover
-            window.authManager.getUserSession = async function() {
-                try {
-                    const token = await this.getToken();
-                    if (!token) {
-                        console.log('No token available for getUserSession');
-                        return null;
-                    }
-
-                    console.log('Fetching user session with failover...');
-                    
-                    // Try primary backend first
-                    let response;
-                    let currentUrl = Config.currentBackendUrl || Config.BACKEND_BASE_URL;
-                    
-                    try {
-                        response = await fetch(`${currentUrl}${Config.API_ENDPOINTS.USER_SESSION}`, {
-                            method: 'GET',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                        
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                        
-                        console.log(`✅ Primary backend successful: ${currentUrl}`);
-                        
-                    } catch (error) {
-                        console.warn(`❌ Primary backend failed (${currentUrl}): ${error.message}`);
-                        
-                        // Try fallback backend
-                        if (Config.BACKEND_FALLBACK_URL && currentUrl !== Config.BACKEND_FALLBACK_URL) {
-                            console.log(`🔄 Trying fallback backend: ${Config.BACKEND_FALLBACK_URL}`);
-                            
-                            try {
-                                response = await fetch(`${Config.BACKEND_FALLBACK_URL}${Config.API_ENDPOINTS.USER_SESSION}`, {
-                                    method: 'GET',
-                                    headers: {
-                                        'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
-                                
-                                if (!response.ok) {
-                                    throw new Error(`HTTP ${response.status}`);
-                                }
-                                
-                                // Update current backend URL for future requests
-                                Config.currentBackendUrl = Config.BACKEND_FALLBACK_URL;
-                                Config.isUsingFallback = true;
-                                this.apiBaseUrl = Config.BACKEND_FALLBACK_URL;
-                                
-                                console.log(`✅ Fallback backend successful: ${Config.BACKEND_FALLBACK_URL}`);
-                                
-                            } catch (fallbackError) {
-                                console.error(`❌ Fallback backend also failed: ${fallbackError.message}`);
-                                throw new Error(`Both backends failed. Primary: ${error.message}, Fallback: ${fallbackError.message}`);
-                            }
-                        } else {
-                            throw error;
-                        }
-                    }
-
-                    if (response && response.ok) {
-                        const data = await response.json();
-                        console.log('User session data received:', data);
-                        return data;
-                    }
-                    return null;
-                    
-                } catch (error) {
-                    console.error('Error getting user session with failover:', error);
-                    return null;
-                }
-            };
-
-            // Enhanced createUserSession with failover
-            window.authManager.createUserSession = async function() {
-                try {
-                    const token = await this.getToken();
-                    if (!token) {
-                        console.log('No token available for createUserSession');
-                        return null;
-                    }
-
-                    console.log('Creating user session with failover...');
-                    
-                    // Try primary backend first
-                    let response;
-                    let currentUrl = Config.currentBackendUrl || Config.BACKEND_BASE_URL;
-                    
-                    const requestBody = JSON.stringify({
-                        email: this.user.email,
-                        name: this.user.name,
-                        auth0_user_id: this.user.sub
-                    });
-                    
-                    try {
-                        response = await fetch(`${currentUrl}${Config.API_ENDPOINTS.USER_SESSION}`, {
-                            method: 'POST',
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            },
-                            body: requestBody
-                        });
-                        
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
-                        
-                        console.log(`✅ Primary backend successful: ${currentUrl}`);
-                        
-                    } catch (error) {
-                        console.warn(`❌ Primary backend failed (${currentUrl}): ${error.message}`);
-                        
-                        // Try fallback backend
-                        if (Config.BACKEND_FALLBACK_URL && currentUrl !== Config.BACKEND_FALLBACK_URL) {
-                            console.log(`🔄 Trying fallback backend: ${Config.BACKEND_FALLBACK_URL}`);
-                            
-                            try {
-                                response = await fetch(`${Config.BACKEND_FALLBACK_URL}${Config.API_ENDPOINTS.USER_SESSION}`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Authorization': `Bearer ${token}`,
-                                        'Content-Type': 'application/json'
-                                    },
-                                    body: requestBody
-                                });
-                                
-                                if (!response.ok) {
-                                    throw new Error(`HTTP ${response.status}`);
-                                }
-                                
-                                // Update current backend URL for future requests
-                                Config.currentBackendUrl = Config.BACKEND_FALLBACK_URL;
-                                Config.isUsingFallback = true;
-                                this.apiBaseUrl = Config.BACKEND_FALLBACK_URL;
-                                
-                                console.log(`✅ Fallback backend successful: ${Config.BACKEND_FALLBACK_URL}`);
-                                
-                            } catch (fallbackError) {
-                                console.error(`❌ Fallback backend also failed: ${fallbackError.message}`);
-                                throw new Error(`Both backends failed. Primary: ${error.message}, Fallback: ${fallbackError.message}`);
-                            }
-                        } else {
-                            throw error;
-                        }
-                    }
-
-                    if (response && response.ok) {
-                        const data = await response.json();
-                        console.log('User session created:', data);
-                        return data;
-                    }
-                    
-                } catch (error) {
-                    console.error('Error creating user session with failover:', error);
-                    return null;
-                }
-            };
-
-            console.log('✅ AuthManager enhanced with backend failover support');
-            console.log(`🔧 Primary backend: ${Config.BACKEND_BASE_URL}`);
-            console.log(`🔧 Fallback backend: ${Config.BACKEND_FALLBACK_URL}`);
-            
-        } else {
-            console.warn('⚠️ AuthManager or Config not found, failover enhancement skipped');
-        }
-    }, 1000); // 1 second delay to ensure everything is loaded
-});
+console.log('✅ AuthManager loaded successfully');
