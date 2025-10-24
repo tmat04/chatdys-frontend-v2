@@ -382,16 +382,16 @@
                 </div>
 
                 <!-- Profile Details -->
-                <div class="profile-card profile-details">
+                <div class="profile-details">
                     <!-- Personal Information -->
-                    <div>
-                        <h3 class="section-title">
+                    <div class="profile-card">
+                        <div class="section-title">
                             <span class="section-icon">👤</span>
                             Personal Information
-                        </h3>
+                        </div>
                         
                         <!-- View Mode -->
-                        <div id="personalInfoView" class="view-mode">
+                        <div id="personalInfoView">
                             <div class="info-grid">
                                 <div class="info-item">
                                     <div class="info-label">First Name</div>
@@ -402,7 +402,7 @@
                                     <div id="lastName" class="info-value">Not specified</div>
                                 </div>
                                 <div class="info-item">
-                                    <div class="info-label">Phone</div>
+                                    <div class="info-label">Phone Number</div>
                                     <div id="phoneNumber" class="info-value">Not specified</div>
                                 </div>
                                 <div class="info-item">
@@ -410,28 +410,29 @@
                                     <div id="location" class="info-value">Not specified</div>
                                 </div>
                             </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary" onclick="profileManager.editPersonalInfo()">Edit Information</button>
+                            </div>
                         </div>
 
                         <!-- Edit Mode -->
                         <div id="personalInfoEdit" class="edit-mode">
                             <form id="personalInfoForm" class="edit-form">
-                                <div class="info-grid">
-                                    <div class="form-group">
-                                        <label class="form-label">First Name</label>
-                                        <input type="text" id="editFirstName" class="form-input" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Last Name</label>
-                                        <input type="text" id="editLastName" class="form-input" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Phone</label>
-                                        <input type="tel" id="editPhoneNumber" class="form-input">
-                                    </div>
-                                    <div class="form-group">
-                                        <label class="form-label">Location</label>
-                                        <input type="text" id="editLocation" class="form-input">
-                                    </div>
+                                <div class="form-group">
+                                    <label class="form-label">First Name</label>
+                                    <input type="text" id="editFirstName" class="form-input" placeholder="Enter first name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Last Name</label>
+                                    <input type="text" id="editLastName" class="form-input" placeholder="Enter last name">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Phone Number</label>
+                                    <input type="tel" id="editPhoneNumber" class="form-input" placeholder="Enter phone number">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Location</label>
+                                    <input type="text" id="editLocation" class="form-input" placeholder="Enter location">
                                 </div>
                                 <div class="form-actions">
                                     <button type="button" class="btn btn-secondary" onclick="profileManager.cancelEdit('personalInfo')">Cancel</button>
@@ -442,27 +443,33 @@
                     </div>
 
                     <!-- Health Information -->
-                    <div>
-                        <h3 class="section-title">
+                    <div class="profile-card">
+                        <div class="section-title">
                             <span class="section-icon">🏥</span>
                             Health Information
-                        </h3>
-                        
+                        </div>
                         <div class="health-conditions">
                             <div class="info-label">Health Conditions</div>
                             <div id="healthConditions" class="condition-tags">
-                                <!-- Conditions will be loaded here -->
+                                <!-- Conditions will be rendered here -->
                             </div>
                         </div>
-                        
-                        <div class="info-grid" style="margin-top: 1rem;">
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="profile-card">
+                        <div class="section-title">
+                            <span class="section-icon">ℹ️</span>
+                            Additional Information
+                        </div>
+                        <div class="info-grid">
                             <div class="info-item">
                                 <div class="info-label">How You Heard About Us</div>
                                 <div id="howHeard" class="info-value">Not specified</div>
                             </div>
                             <div class="info-item">
                                 <div class="info-label">Profile Completed</div>
-                                <div id="profileCompleted" class="info-value">--</div>
+                                <div id="profileCompleted" class="info-value">No</div>
                             </div>
                         </div>
                     </div>
@@ -470,8 +477,8 @@
             </div>
 
             <div class="action-buttons">
-                <button class="btn btn-secondary" onclick="profileManager.editPersonalInfo()">Edit Profile</button>
-                <a href="settings.html" class="btn btn-primary">Account Settings</a>
+                <a href="settings.html" class="btn btn-secondary">Go to Settings</a>
+                <a href="../chatdys-main-homepage.html" class="btn btn-primary">Back to Home</a>
             </div>
         </div>
     </div>
@@ -487,52 +494,64 @@
     <script>
         class ProfileManager {
             constructor() {
-                this.authManager = null;
+                this.auth0Client = null;
                 this.userProfile = null;
                 this.apiBaseUrl = window.Config?.BACKEND_BASE_URL || 'https://api.chatdys.com';
                 this.init();
             }
 
             async init() {
-                // Wait for auth manager
-                await this.waitForAuth();
-                
-                // Check if user is authenticated
-                if (!this.authManager?.isAuthenticated) {
-                    this.showError('Please sign in to view your profile.');
-                    return;
-                }
-
-                // Load user profile
-                await this.loadProfile();
+                // Check Auth0 session directly (not relying on window.authManager)
+                await this.checkAuth0Session();
             }
 
-            async waitForAuth() {
-                return new Promise((resolve) => {
-                    let attempts = 0;
-                    const maxAttempts = 50;
+            async checkAuth0Session() {
+                try {
+                    // Check if Auth0 SDK and Config are loaded
+                    if (typeof auth0 === 'undefined' || !window.Config) {
+                        console.log('Auth0 SDK or Config not loaded, waiting...');
+                        setTimeout(() => this.checkAuth0Session(), 500);
+                        return;
+                    }
+
+                    // Initialize Auth0 client
+                    this.auth0Client = await auth0.createAuth0Client({
+                        domain: window.Config.AUTH0_DOMAIN,
+                        clientId: window.Config.AUTH0_CLIENT_ID,
+                        authorizationParams: {
+                            redirect_uri: window.Config.AUTH0_REDIRECT_URI,
+                            audience: window.Config.AUTH0_AUDIENCE,
+                            scope: window.Config.AUTH0_SCOPE
+                        },
+                        cacheLocation: 'localstorage',
+                        useRefreshTokens: true
+                    });
+
+                    // Check if user is authenticated
+                    const isAuthenticated = await this.auth0Client.isAuthenticated();
                     
-                    const checkAuth = () => {
-                        if (window.authManager && window.authManager.isAuthenticated !== undefined) {
-                            this.authManager = window.authManager;
-                            resolve();
-                        } else if (attempts < maxAttempts) {
-                            attempts++;
-                            setTimeout(checkAuth, 100);
-                        } else {
-                            resolve(); // Continue even if auth not available
-                        }
-                    };
+                    if (!isAuthenticated) {
+                        this.showError('Please sign in to view your profile.');
+                        return;
+                    }
+
+                    // User is authenticated, load profile
+                    await this.loadProfile();
                     
-                    checkAuth();
-                });
+                } catch (error) {
+                    console.error('Error checking Auth0 session:', error);
+                    this.showError('Authentication error. Please try signing in again.');
+                }
             }
 
             async loadProfile() {
                 try {
                     this.showLoading();
                     
-                    const token = await this.authManager.getToken();
+                    // Get token from Auth0
+                    const token = await this.auth0Client.getTokenSilently();
+                    
+                    // Fetch user profile from backend
                     const response = await fetch(`${this.apiBaseUrl}/api/user/profile`, {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -638,7 +657,7 @@
                         location: document.getElementById('editLocation').value
                     };
 
-                    const token = await this.authManager.getToken();
+                    const token = await this.auth0Client.getTokenSilently();
                     const response = await fetch(`${this.apiBaseUrl}/api/user/profile`, {
                         method: 'PUT',
                         headers: {

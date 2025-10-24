@@ -372,12 +372,12 @@
                     <span class="section-icon">🔔</span>
                     Notification Preferences
                 </h2>
-                <p class="section-description">Control how and when you receive notifications</p>
-
+                <p class="section-description">Choose what notifications you want to receive</p>
+                
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-label">Email Notifications</div>
-                        <div class="setting-description">Receive updates about new features and health tips</div>
+                        <div class="setting-description">Receive updates and announcements via email</div>
                     </div>
                     <div class="setting-control">
                         <div class="toggle-switch" id="emailNotifications" onclick="toggleSetting('emailNotifications')">
@@ -389,7 +389,7 @@
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-label">Health Reminders</div>
-                        <div class="setting-description">Get reminders to track your symptoms and medications</div>
+                        <div class="setting-description">Get reminders to track your health metrics</div>
                     </div>
                     <div class="setting-control">
                         <div class="toggle-switch active" id="healthReminders" onclick="toggleSetting('healthReminders')">
@@ -401,7 +401,7 @@
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-label">Research Updates</div>
-                        <div class="setting-description">Receive notifications about new research and studies</div>
+                        <div class="setting-description">Stay informed about new dysautonomia research</div>
                     </div>
                     <div class="setting-control">
                         <div class="toggle-switch" id="researchUpdates" onclick="toggleSetting('researchUpdates')">
@@ -417,12 +417,12 @@
                     <span class="section-icon">🔒</span>
                     Privacy & Data
                 </h2>
-                <p class="section-description">Control your data and privacy settings</p>
-
+                <p class="section-description">Control how your data is used and shared</p>
+                
                 <div class="setting-item">
                     <div class="setting-info">
-                        <div class="setting-label">Data Sharing</div>
-                        <div class="setting-description">Allow anonymized data to help improve ChatDys for everyone</div>
+                        <div class="setting-label">Data Sharing for Research</div>
+                        <div class="setting-description">Help advance dysautonomia research (anonymized data only)</div>
                     </div>
                     <div class="setting-control">
                         <div class="toggle-switch active" id="dataSharing" onclick="toggleSetting('dataSharing')">
@@ -433,8 +433,8 @@
 
                 <div class="setting-item">
                     <div class="setting-info">
-                        <div class="setting-label">Analytics</div>
-                        <div class="setting-description">Help us improve by sharing usage analytics</div>
+                        <div class="setting-label">Analytics & Improvements</div>
+                        <div class="setting-description">Help us improve ChatDys with usage analytics</div>
                     </div>
                     <div class="setting-control">
                         <div class="toggle-switch active" id="analytics" onclick="toggleSetting('analytics')">
@@ -446,7 +446,7 @@
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-label">Export Your Data</div>
-                        <div class="setting-description">Download a copy of all your ChatDys data</div>
+                        <div class="setting-description">Download a copy of all your data</div>
                     </div>
                     <div class="setting-control">
                         <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
@@ -454,31 +454,21 @@
                 </div>
             </div>
 
-            <!-- Premium Features -->
+            <!-- Premium Features (only shown for premium users) -->
             <div class="settings-card premium-section" id="premiumSection" style="display: none;">
                 <h2 class="section-title">
                     <span class="section-icon">⭐</span>
-                    Premium Features
+                    Premium Subscription
                 </h2>
-                <p class="section-description">Manage your premium subscription and features</p>
-
+                <p class="section-description">Manage your premium subscription</p>
+                
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-label">Subscription Status</div>
-                        <div class="setting-description" id="subscriptionStatus">Active Premium Subscription</div>
+                        <div class="setting-description">Active Premium Member</div>
                     </div>
                     <div class="setting-control">
                         <button class="btn btn-secondary" onclick="manageBilling()">Manage Billing</button>
-                    </div>
-                </div>
-
-                <div class="setting-item">
-                    <div class="setting-info">
-                        <div class="setting-label">Chat History</div>
-                        <div class="setting-description">Access to unlimited conversation history</div>
-                    </div>
-                    <div class="setting-control">
-                        <a href="history.html" class="btn btn-primary">View History</a>
                     </div>
                 </div>
             </div>
@@ -490,7 +480,7 @@
                     Danger Zone
                 </h2>
                 <p class="section-description">Irreversible and destructive actions</p>
-
+                
                 <div class="setting-item">
                     <div class="setting-info">
                         <div class="setting-label">Delete Account</div>
@@ -520,56 +510,88 @@
     <script>
         class SettingsManager {
             constructor() {
-                this.authManager = null;
+                this.auth0Client = null;
                 this.userSettings = {};
                 this.apiBaseUrl = window.Config?.BACKEND_BASE_URL || 'https://api.chatdys.com';
                 this.init();
             }
 
             async init() {
-                // Wait for auth manager
-                await this.waitForAuth();
-                
-                // Check if user is authenticated
-                if (!this.authManager?.isAuthenticated) {
-                    this.showError('Please sign in to view your settings.');
-                    return;
-                }
-
-                // Load user settings
-                await this.loadSettings();
+                // Check Auth0 session directly (not relying on window.authManager)
+                await this.checkAuth0Session();
             }
 
-            async waitForAuth() {
-                return new Promise((resolve) => {
-                    let attempts = 0;
-                    const maxAttempts = 50;
+            async checkAuth0Session() {
+                try {
+                    // Check if Auth0 SDK and Config are loaded
+                    if (typeof auth0 === 'undefined' || !window.Config) {
+                        console.log('Auth0 SDK or Config not loaded, waiting...');
+                        setTimeout(() => this.checkAuth0Session(), 500);
+                        return;
+                    }
+
+                    // Initialize Auth0 client
+                    this.auth0Client = await auth0.createAuth0Client({
+                        domain: window.Config.AUTH0_DOMAIN,
+                        clientId: window.Config.AUTH0_CLIENT_ID,
+                        authorizationParams: {
+                            redirect_uri: window.Config.AUTH0_REDIRECT_URI,
+                            audience: window.Config.AUTH0_AUDIENCE,
+                            scope: window.Config.AUTH0_SCOPE
+                        },
+                        cacheLocation: 'localstorage',
+                        useRefreshTokens: true
+                    });
+
+                    // Check if user is authenticated
+                    const isAuthenticated = await this.auth0Client.isAuthenticated();
                     
-                    const checkAuth = () => {
-                        if (window.authManager && window.authManager.isAuthenticated !== undefined) {
-                            this.authManager = window.authManager;
-                            resolve();
-                        } else if (attempts < maxAttempts) {
-                            attempts++;
-                            setTimeout(checkAuth, 100);
-                        } else {
-                            resolve(); // Continue even if auth not available
-                        }
-                    };
+                    if (!isAuthenticated) {
+                        this.showError('Please sign in to view your settings.');
+                        return;
+                    }
+
+                    // User is authenticated, load settings
+                    await this.loadSettings();
                     
-                    checkAuth();
-                });
+                } catch (error) {
+                    console.error('Error checking Auth0 session:', error);
+                    this.showError('Authentication error. Please try signing in again.');
+                }
             }
 
             async loadSettings() {
                 try {
                     this.showLoading();
                     
-                    // Get user data from auth manager
-                    const user = this.authManager.user;
+                    // Get Auth0 user
+                    const auth0User = await this.auth0Client.getUser();
                     
-                    // Display user information
-                    this.displayUserInfo(user);
+                    // Get token from Auth0
+                    const token = await this.auth0Client.getTokenSilently();
+                    
+                    // Fetch user data from backend
+                    try {
+                        const response = await fetch(`${this.apiBaseUrl}/api/user/session`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        if (response.ok) {
+                            const backendUser = await response.json();
+                            // Merge Auth0 user with backend user data
+                            const user = { ...auth0User, ...backendUser };
+                            this.displayUserInfo(user);
+                        } else {
+                            // Backend failed, but Auth0 session is valid
+                            this.displayUserInfo(auth0User);
+                        }
+                    } catch (error) {
+                        console.log('Backend fetch failed, using Auth0 data only:', error);
+                        this.displayUserInfo(auth0User);
+                    }
                     
                     // Load user preferences (this would come from your backend)
                     // For now, we'll use default settings
