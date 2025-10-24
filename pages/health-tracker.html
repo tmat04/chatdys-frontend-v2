@@ -436,19 +436,21 @@
         <span class="feedback-button-text">Feedback</span>
     </button>
 
-    <!-- Scripts -->
     <!-- Configuration MUST load first -->
     <script src="../config/config.js"></script>
     
     <!-- Auth0 SDK -->
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
-    <script src="../js/auth.js"></script>
     <script src="../js/shared-header.js"></script>
     <script src="../js/feedback-modal.js"></script>
+    <script src="../js/auth.js"></script>
     <script>
-        // No need for additional authentication logic here
-        // The shared-header.js will handle Auth0 session checking directly
-        // This ensures the header shows correct authentication state
+        // Initialize Auth0 when page loads
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (window.authManager) {
+                await authManager.init();
+            }
+        });
     </script>
 </body>
 </html>
