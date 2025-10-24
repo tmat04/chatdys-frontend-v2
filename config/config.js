@@ -12,7 +12,7 @@ window.Config = {
     // For Railway: https://your-app-name.up.railway.app
     // For Render: https://your-app-name.onrender.com
     // For Fly.io: https://your-app-name.fly.dev
-    BACKEND_BASE_URL: 'http://localhost:8000',  // Change this to your deployed backend URL
+    BACKEND_BASE_URL: 'https://chatdys-backend-rail-production.up.railway.app',
     
     // Optional: Fallback backend URL for redundancy
     BACKEND_FALLBACK_URL: null,  // Set to a second backend URL if you have one
