@@ -2,6 +2,7 @@ class SharedHeader {
     constructor() {
         this.currentPage = this.getCurrentPage();
         this.authManager = null;
+        this.auth0Client = null;
         this.init();
     }
 
@@ -199,23 +200,79 @@ class SharedHeader {
     }
 
     async initAuth() {
-        // Wait for auth manager to be available
-        let attempts = 0;
-        const maxAttempts = 50; // 5 seconds max wait
-        
-        const waitForAuth = () => {
-            if (window.authManager && typeof window.authManager.init === 'function') {
-                this.authManager = window.authManager;
-                this.connectToAuthManager();
-            } else if (attempts < maxAttempts) {
-                attempts++;
-                setTimeout(waitForAuth, 100);
-            } else {
-                console.log('Auth manager not available after 5 seconds');
+        // Try to use existing auth manager if available
+        if (window.authManager && typeof window.authManager.init === 'function') {
+            this.authManager = window.authManager;
+            this.connectToAuthManager();
+            return;
+        }
+
+        // If auth manager not available, check Auth0 session directly
+        await this.checkAuth0Session();
+    }
+
+    async checkAuth0Session() {
+        try {
+            // Check if Auth0 SDK is loaded
+            if (typeof auth0 === 'undefined' || !window.Config) {
+                console.log('Auth0 SDK or Config not loaded, waiting...');
+                setTimeout(() => this.checkAuth0Session(), 500);
+                return;
             }
-        };
-        
-        waitForAuth();
+
+            // Initialize Auth0 client
+            this.auth0Client = await auth0.createAuth0Client({
+                domain: window.Config.AUTH0_DOMAIN,
+                clientId: window.Config.AUTH0_CLIENT_ID,
+                authorizationParams: {
+                    redirect_uri: window.Config.AUTH0_REDIRECT_URI,
+                    audience: window.Config.AUTH0_AUDIENCE,
+                    scope: window.Config.AUTH0_SCOPE
+                },
+                cacheLocation: 'localstorage',
+                useRefreshTokens: true
+            });
+
+            // Check if user is authenticated
+            const isAuthenticated = await this.auth0Client.isAuthenticated();
+            
+            if (isAuthenticated) {
+                // Get user info
+                const user = await this.auth0Client.getUser();
+                
+                // Get token and fetch backend user data
+                const token = await this.auth0Client.getTokenSilently();
+                
+                try {
+                    const response = await fetch(`${window.Config.BACKEND_BASE_URL}${window.Config.API_ENDPOINTS.USER_SESSION}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const backendUser = await response.json();
+                        // Merge Auth0 user with backend user data
+                        const fullUser = { ...user, ...backendUser };
+                        this.updateUserInfo(fullUser);
+                    } else {
+                        // Backend failed, but Auth0 session is valid
+                        this.updateUserInfo(user);
+                    }
+                } catch (error) {
+                    console.log('Backend fetch failed, using Auth0 data only:', error);
+                    this.updateUserInfo(user);
+                }
+            } else {
+                // Not authenticated
+                this.updateUserInfo(null);
+            }
+        } catch (error) {
+            console.error('Error checking Auth0 session:', error);
+            this.updateUserInfo(null);
+        }
     }
 
     connectToAuthManager() {
@@ -240,18 +297,32 @@ class SharedHeader {
         userMenu.classList.toggle('active');
     }
 
-    login() {
+    async login() {
         if (this.authManager) {
             this.authManager.login();
+        } else if (this.auth0Client) {
+            // Use Auth0 client directly
+            await this.auth0Client.loginWithRedirect({
+                authorizationParams: {
+                    redirect_uri: window.location.origin + '/chatdys-main-homepage.html'
+                }
+            });
         } else {
             // Redirect to homepage for login
             window.location.href = this.getPagePath('chatdys-main-homepage.html');
         }
     }
 
-    logout() {
+    async logout() {
         if (this.authManager) {
             this.authManager.logout();
+        } else if (this.auth0Client) {
+            // Use Auth0 client directly
+            await this.auth0Client.logout({
+                logoutParams: {
+                    returnTo: window.location.origin + '/chatdys-main-homepage.html'
+                }
+            });
         } else {
             // Redirect to homepage
             window.location.href = this.getPagePath('chatdys-main-homepage.html');
@@ -348,56 +419,51 @@ class SharedHeader {
                 freeBadge.style.display = isPremium ? 'none' : 'inline-block';
             }
 
-            // Show/hide features based on premium status
+            // Show/hide history button based on premium status
             if (historyButton) {
-                historyButton.style.display = isPremium ? 'flex' : 'none';
+                historyButton.style.display = isPremium ? 'block' : 'none';
             }
 
-            // Update question count for free users
-            if (questionCountDisplay && questionsRemaining) {
-                if (isPremium) {
-                    questionCountDisplay.style.display = 'none';
-                } else {
-                    const dailyCount = user.daily_question_count || 0;
-                    const remaining = Math.max(0, (window.Config?.LIMITS?.FREE_DAILY_QUESTIONS || 5) - dailyCount);
-                    questionsRemaining.textContent = remaining;
-                    questionCountDisplay.style.display = 'block';
-                }
+            // Update subscription button text
+            if (subscriptionText) {
+                subscriptionText.textContent = isPremium ? 'Manage Subscription' : 'Upgrade to Premium';
             }
 
-            // Update subscription button
-            if (subscriptionButton && subscriptionText) {
-                if (isPremium) {
-                    subscriptionText.textContent = 'Manage Subscription';
-                } else {
-                    subscriptionText.textContent = 'Upgrade to Premium';
-                }
-            }
-
-            // Hide upgrade section for premium users
+            // Show/hide upgrade section
             if (upgradeSection) {
                 upgradeSection.style.display = isPremium ? 'none' : 'block';
             }
 
+            // Update question count for free users
+            if (!isPremium && user.questions_asked !== undefined) {
+                const limit = window.Config?.LIMITS?.FREE_DAILY_QUESTIONS || 5;
+                const remaining = Math.max(0, limit - user.questions_asked);
+                
+                if (questionCountDisplay) {
+                    questionCountDisplay.style.display = 'block';
+                }
+                
+                if (questionsRemaining) {
+                    questionsRemaining.textContent = remaining;
+                }
+            } else {
+                if (questionCountDisplay) {
+                    questionCountDisplay.style.display = 'none';
+                }
+            }
         } else {
             // Show auth button, hide user menu
             if (authButton) authButton.style.display = 'block';
             if (userMenu) userMenu.style.display = 'none';
         }
     }
-
-    // Method to be called by auth manager when auth state changes
-    onAuthStateChange(isAuthenticated, user) {
-        this.updateUserInfo(isAuthenticated ? user : null);
-    }
 }
 
-// Initialize shared header when DOM is loaded
-let sharedHeader = null;
-
-document.addEventListener('DOMContentLoaded', () => {
-    sharedHeader = new SharedHeader();
-});
-
-// Export for global access
-window.sharedHeader = sharedHeader;
+// Initialize shared header when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.sharedHeader = new SharedHeader();
+    });
+} else {
+    window.sharedHeader = new SharedHeader();
+}
